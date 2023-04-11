@@ -1,1 +1,4 @@
-# CSC-365-Project
+# CSC-365-Project: Recipe API
+Developers: Anna Rosenberg (arosen12@calpoly.edu), Michelle Tan (mtan22@calpoly.edu), Calista Kerins ()
+
+This Recipe API returns statistics/data on common recipes. This API will contain the following endpoints: get_recipe(recipe_id: str), list_recipes(dish: str = "",limit: int, offset: int,  sort: sort_options), and add_recipe(dish: str, ingredients: list). The get_recipe endpoint will allow users to retrieve a specific recipe by using a unique recipe id. The list_recipes endpoint will allow users to view a list of recipes, and will allow them to search by dish name or by dishes that contain a specified ingredient. Users can also sort the recipes returned by list_recipes in the following ways: by dish title aplabetically, by calories in dish, by cost of total ingredients, and by number of ingredients used. The add_recipe endpoint will allow users to add their own recipes to the API. 
