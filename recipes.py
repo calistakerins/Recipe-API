@@ -13,6 +13,7 @@ def get_recipe(recipe_id: int):
     it returns:
     * `recipe_id`: the internal id of the recipe. Can be used to query the
       `/recipes/{id}` endpoint.
+    * `recipe_name`: The name of the recipe.
     * `cuisine`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from (breakfast, lunch, dinner, ect).
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
