@@ -65,7 +65,7 @@ def list_recipe(recipe: str = "",
 def add_recipe(recipe: str,
     cuisine: str,
     meal_type: str,
-    ingredients: str,
+    ingredients: list[dict],
     time: int):
     """
     This endpoint will allow users to add their own recipes to the API. A recipie will consist of:
