@@ -77,6 +77,7 @@ def add_recipe(recipe: str,
     """
     return 
 
+
 def modify_recipe(recipe_id: int,
     old_ingredient: str = "",
     new_ingredient: str = "",
@@ -88,5 +89,37 @@ def modify_recipe(recipe_id: int,
     If the string of an old ingredient matches an ingredient in the recipe,
     the ingredient will be changed to the new ingredient. The user can also change the
     amount of an ingredient used in the recipe with the new_amount parameter. 
+    """
+    return
+
+def favorite_recipe(recipe_id: int,
+    ):
+    """
+    This endpoint will allow users to add existing recipes to their favorites list. 
+    It will write the recipe_id to the favorite_recipes database.
+    """
+    return
+
+def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
+    offset: int = Query(0, ge=0),
+    sort: recipe_sort_options = recipe_sort_options.recipe
+    ):
+    """
+    This endpoint will list all recipes in the users favorites list. For each recipe it returns:
+    * `recipe_id`: the internal id of the character. Can be used to query the
+      `/recipes/{recipe_id}` endpoint.
+    * `recipe`: The name of the recipe.
+    * `cuisine`: The cuisine that the recipe is from.
+    * `meal_type`: The meal type that the recipe is from.
+    * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
+    * `time`: time needed to make the recipe.
+
+    You can also sort the results by using the `sort` query parameter:
+    * `recipe` - Sort by recipe name alphabetically.
+    * `time` - Sort by cooking time.
+
+    The `limit` and `offset` query parameters are used for pagination.
+    The `limit` query parameter specifies the maximum number of results to return.
+    The `offset` query parameter specifies the number of results to skip before
     """
     return
