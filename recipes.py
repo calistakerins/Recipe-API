@@ -77,21 +77,6 @@ def add_recipe(recipe: str,
     """
     return 
 
-
-def modify_recipe(recipe_id: int,
-    old_ingredient: str = "",
-    new_ingredient: str = "",
-    new_amount: str = "",
-    ):
-    """
-    This endpoint will allow users to modify an ingredient in an existing recipe. 
-    The user will be able to change the name of an ingredient or the amount of an ingredient.
-    If the string of an old ingredient matches an ingredient in the recipe,
-    the ingredient will be changed to the new ingredient. The user can also change the
-    amount of an ingredient used in the recipe with the new_amount parameter. 
-    """
-    return
-
 def favorite_recipe(recipe_id: int,
     ):
     """
