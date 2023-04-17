@@ -14,3 +14,10 @@ This Recipe API returns statistics/data on common recipes. This API will contain
 - As a user, I want to be able to see how long it will take me to make each recipe so that I can plan accordingly.
 - As a user, I want to be able to filter recipes by the time they take to make so that I can search for an easy meal if I am in a rush.
 - As a user, I want to be able to favorite recipes, so that I can quickly access recipes I like.
+
+# Edge Cases
+
+-If there are no recipes in the database matching all ingredients the user has listed, the list_recipes will return recipes that contain the most amount of ingredients that the user has listed.
+-If there are multiple recipes in the database matching all ingredients the user has listed, the list_recipes will return all recipes that contain all ingredients.
+-Recipes that fit into multiple meal type categories (could be made for lunch or dinner, etc.), will be allowed to be put into multiple meal type categories.
+-If a user adds a recipe that contains an ingredient that is not in the ingredient database, that ingredient needs to be added to the ingredient database.
