@@ -17,7 +17,7 @@ This Recipe API returns statistics/data on common recipes. This API will contain
 
 # Edge Cases
 
--If there are no recipes in the database matching all ingredients the user has listed, the list_recipes will return recipes that contain the most amount of ingredients that the user has listed.
--If there are multiple recipes in the database matching all ingredients the user has listed, the list_recipes will return all recipes that contain all ingredients.
--Recipes that fit into multiple meal type categories (could be made for lunch or dinner, etc.), will be allowed to be put into multiple meal type categories.
--If a user adds a recipe that contains an ingredient that is not in the ingredient database, that ingredient needs to be added to the ingredient database.
+- If there are no recipes in the database matching all ingredients the user has listed, the list_recipes will return recipes that contain the most amount of ingredients that the user has listed.
+- If there are multiple recipes in the database matching all ingredients the user has listed, the list_recipes will return all recipes that contain all ingredients.
+- Recipes that fit into multiple meal type categories (could be made for lunch or dinner, etc.), will be allowed to be put into multiple meal type categories.
+- If a user adds a recipe that contains an ingredient that is not in the ingredient database, that ingredient needs to be added to the ingredient database.
