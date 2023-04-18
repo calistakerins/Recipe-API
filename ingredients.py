@@ -6,7 +6,7 @@ from fastapi.params import Query
 router = APIRouter()
 
 @router.get("/ingredients/{ingr_id}", tags=["ingredients"])
-def get_ingredients(ingr_id: int):
+def get_ingredient(ingr_id: int):
     """
     This endpoint returns a single ingredient by its identifier. For each ingredient
     it returns:
