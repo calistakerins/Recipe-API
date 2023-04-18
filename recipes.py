@@ -108,3 +108,4 @@ def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     The `offset` query parameter specifies the number of results to skip before
     """
     return
+
