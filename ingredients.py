@@ -20,3 +20,4 @@ def get_ingredients(ingr_id: int):
     if ingredient is None:
         raise HTTPException(status_code=404, detail="Ingredient not found")
     return ingredient
+
