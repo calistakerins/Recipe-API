@@ -21,3 +21,4 @@ This Recipe API returns statistics/data on common recipes. The endpoints for thi
 - If there are multiple recipes in the database matching all ingredients the user has listed, the list_recipes will return all recipes that contain all ingredients.
 - Recipes that fit into multiple meal type categories (could be made for lunch or dinner, etc.), will be allowed to be put into multiple meal type categories.
 - If a user adds a recipe that contains an ingredient that is not in the ingredient database, the add_recipe enpoint will throw an error and ask users to first add the new ingredient to the database using the add_recipe endpoint.
+- Our database does not have user-related identification, so all users will see everyones favoried recipes and added recipes. 
