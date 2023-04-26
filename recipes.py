@@ -43,7 +43,7 @@ class IngredientsListJson(BaseModel):
 
    
 @router.post("/ingredients/", tags=["ingredients"])
-def get_recipes_by_ingredient(ingredients: IngredientJson):
+def get_recipes_by_ingredient(ingredients: IngredientListJson):
     """
     This endpoint returns all the recipe(s) that include the ingredients 
     in the list that the user inputs.
