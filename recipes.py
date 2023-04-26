@@ -98,7 +98,7 @@ class QuantitiesJson(BaseModel):
 @router.post("/recipes/{recipe_id}", tags=["recipes"])
 def add_recipe(recipe: RecipeJson, ingredient_quantities:QuantitiesJson):
     """
-    This endpoint will allow users to add their own recipes to the API. A recipie will consist of:
+    This endpoint will allow users to add their own recipes to the API. A recipe will consist of:
     * `recipe_name`: The name of the recipe.
     * `cuisine_type`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
@@ -121,7 +121,7 @@ def add_recipe(recipe: RecipeJson, ingredient_quantities:QuantitiesJson):
     in the recipe. All ingredients used in a new recipe will have their num_recipes atribute increased
     by 1. 
 
-    This enpoint will return the id of the resulting recipe created
+    This endpoint will return the id of the resulting recipe created.
     """
     return 
 
