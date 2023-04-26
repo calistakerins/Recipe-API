@@ -108,13 +108,13 @@ class RecipeJson(BaseModel):
     num_ingredients: int
     recipe_url: string
     
-class IngredientJson(BaseModel):
+class IngredientQuantityJson(BaseModel):
     ingredient_id: int
     unit_type: string
     amount: int
         
 class QuantitiesJson(BaseModel):
-    ingredientQuantities = List[IngredientJson]
+    ingredientQuantities = List[IngredientQuantityJson]
 
 
 @router.post("/recipes/{recipe_id}", tags=["recipes"])
