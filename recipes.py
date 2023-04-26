@@ -110,6 +110,10 @@ def add_recipe(recipe: RecipeJson, ingredient_quantities:QuantitiesJson):
     To add a new recipe, all ingredients in the recipe must already but in the database.
     If an ingredient is not, this enpoint will throw an error and ask users to add
     the new ingredient first. 
+    
+    When a new recipe is added, this endpoint must also update the num_recipes atribute of the ingredients used
+    in the recipe. All ingredients used in a new recipe will have their num_recipes atribute increased
+    by 1. 
 
     This enpoint will return the id of the resulting recipe created
     """
