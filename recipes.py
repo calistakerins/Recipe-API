@@ -35,6 +35,13 @@ def get_recipe(recipe_id: int):
         raise HTTPException(status_code=404, detail="Recipe not found")
     return recipe
 
+class IngredientJson(BaseModel):
+    ingredient_id: int
+
+class IngredientsListJson(BaseModel):
+    ingredients = List[IngredientJson]
+
+   
 @router.post("/ingredients/", tags=["ingredients"])
 def get_recipes_by_ingredient(ingredients: IngredientJson):
     """
