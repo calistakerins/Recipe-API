@@ -5,6 +5,12 @@ from fastapi.params import Query
 
 router = APIRouter()
 
+class meal_type(Enum):
+    breakfast = 1
+    lunch = 2
+    dinner = 3
+    dessert = 4
+    snack = 5
 
 @router.get("/recipes/{recipe_id}", tags=["recipes"])
 def get_recipe(recipe_id: int):
@@ -30,13 +36,13 @@ def get_recipe(recipe_id: int):
     return recipe
 
 class recipe_sort_options(str, Enum):
-    movie_title = "recipe"
-    character = "time"
+    recipe_name = "recipe"
+    prep_time = "time"
 
 @router.get("/recipes/", tags=["recipes"])
 def list_recipe(recipe: str = "",
     cuisine: str = "",
-    meal_type: str = "",
+    meal_type: int,
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
     sort: recipe_sort_options = recipe_sort_options.recipe):
@@ -74,7 +80,7 @@ def list_recipe(recipe: str = "",
 class RecipeJson(BaseModel):
     recipe_name: string
     cusine_type: string
-    meal_type: string
+    meal_type: int
     calories: int
     prep_time: int
     num_ingredients: int
