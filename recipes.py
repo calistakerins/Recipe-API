@@ -11,13 +11,17 @@ def get_recipe(recipe_id: int):
     """
     This endpoint returns a single recipe by its identifier. For each recipe
     it returns:
-    * `recipe_id`: the internal id of the recipe. Can be used to query the
-      `/recipes/{id}` endpoint.
+    * `recipe_id`: the internal id of the character. Can be used to query the
+      `/recipes/{recipe_id}` endpoint.
     * `recipe_name`: The name of the recipe.
-    * `cuisine`: The cuisine that the recipe is from.
-    * `meal_type`: The meal type that the recipe is from (breakfast, lunch, dinner, ect).
+    * `cuisine_type`: The cuisine that the recipe is from.
+    * `meal_type`: The meal type that the recipe is from.
+    * `calories`: total calories in the recipe
+    * `prep_time`: The total time it takes to make the recipe.
+    * `num_ingredients`: The total number of ingredients the recipe.
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
-    * `time`: The total time it takes to make the recipe.
+    * `recipe_cost`: The total cost of making the recipe.
+    * `recipe_url`: url link to the recipe.
     """
 
     recipe = db.get_recipe(recipe_id)
@@ -40,10 +44,14 @@ def list_recipe(recipe: str = "",
     This endpoint returns a list of recipes. For each recipe it returns:
     * `recipe_id`: the internal id of the character. Can be used to query the
       `/recipes/{recipe_id}` endpoint.
-    * `recipe`: The name of the recipe.
-    * `cuisine`: The cuisine that the recipe is from.
+    * `recipe_name`: The name of the recipe.
+    * `cuisine_type`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
-    * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
+    * `calories`: total calories in the recipe
+    * `prep_time`: The total time it takes to make the recipe.
+    * `num_ingredients`: The total number of ingredients the recipe.
+    * `recipe_cost`: The total cost of making the recipe.
+    * `recipe_url`: url link to the recipe.
 
     You can filter for recipes whose name contains a string by using the
     `recipe` query parameter. You can filter for recipes by cuisine by using the
@@ -128,7 +136,7 @@ def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     * `recipe_id`: the internal id of the character. Can be used to query the
       `/recipes/{recipe_id}` endpoint.
     * `recipe`: The name of the recipe.
-    * `cuisine`: The cuisine that the recipe is from.
+    * `cuisine_type`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
     * `time`: time needed to make the recipe.
