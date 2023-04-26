@@ -35,6 +35,28 @@ def get_recipe(recipe_id: int):
         raise HTTPException(status_code=404, detail="Recipe not found")
     return recipe
 
+@router.post("/ingredients/", tags=["ingredients"])
+def get_recipes_by_ingredient(ingredients: IngredientJson):
+    """
+    This endpoint returns all the recipe(s) that include the ingredients 
+    in the list that the user inputs.
+    
+    For each recipe, it returns:
+    * `recipe_id`: the internal id of the character. Can be used to query the
+      `/recipes/{recipe_id}` endpoint.
+    * `recipe_name`: The name of the recipe.
+    * `cuisine_type`: The cuisine that the recipe is from.
+    * `meal_type`: The meal type that the recipe is from.
+    * `calories`: total calories in the recipe
+    * `prep_time`: The total time it takes to make the recipe.
+    * `num_ingredients`: The total number of ingredients the recipe.
+    * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
+    * `recipe_cost`: The total cost of making the recipe.
+    * `recipe_url`: url link to the recipe.
+    """
+    return
+    
+    
 class recipe_sort_options(str, Enum):
     recipe_name = "recipe"
     prep_time = "time"
