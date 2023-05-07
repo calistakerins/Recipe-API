@@ -8,7 +8,7 @@ This Recipe API returns statistics/data on common recipes. The endpoints for thi
 - As a user, I want to be able to access recipes with a given list of ingredients, so that I can make a meal with food I already have.
 - As a user, I want to be able to filter recipes by meal type (breakfast, lunch, dinner, dessert, snack) so that I can find a recipe for the meal I am making.
 - As a user, I want to be able to filter recipes by cuisine (Italian, Korean, Mexican, etc.) so that I can make whatever type of food I am craving.
-- As a chef, I want to be able to add new recipes I have created to the database of existing recipes so that I can access them again.
+- As a user, I want to be able to add new recipes I have created to the database of existing recipes so that I can access them again.
 - As a user, I want to be able to see what ingredients I am missing from a specific recipe so that I know what I need to buy.
 - The system shall order recipes based on the number of matching ingredients between each recipe and the given user input, displaying recipes with the most matching ingredients at the top.
 - As a user, I want to be able to see how long it will take me to make each recipe so that I can plan accordingly.
