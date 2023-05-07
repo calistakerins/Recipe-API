@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from enum import Enum
 from src import database as db
 from fastapi.params import Query
+import sqlalchemy
+
 
 router = APIRouter()
 
@@ -16,7 +18,24 @@ def get_ingredients(ingr_id: int):
     * `recipes`: A list of the recipes that contain the ingredient.
     """
     
-    ingredient = db.get_ingredient(ingr_id)
-    if ingredient is None:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
-    return ingredient
+    stmt = (
+        sqlalchemy.select(
+            db.ingredients.ingredient_id,
+            db.ingredients.ingredient_name,
+            db.ingredients.ingredient_cost,
+            #sqlalchemy.func.array_agg(db.ingredients_quantities.recipe_id).label("recipes"),
+        )
+    )
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="ingredient not found")
+        json = {
+            "ingredient_id": result.ingredient_id,
+            "ingredient": result.ingredient_name,
+            "ingredient_cost": result.ingredients_cost,
+        }
+
+
+    return json
