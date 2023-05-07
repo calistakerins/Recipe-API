@@ -1,1 +1,6 @@
-ingredient_id, ingredient_name
+ingredient_id, ingredient_name, ingredient_cost_usd
+0, chorizo sausage link, 5.00
+1, chipotle peppers in adobo sauce, 1.90
+2, corn tortillas, 2.50
+3, onion, 1.00
+4, cilantro, 0.80
