@@ -1,0 +1,6 @@
+recipe_id, ingredient_id, unit_type, amount
+0, 0, sausage link, 1
+0, 1, tablespoons, 2
+0, 2, tortillas, 4
+0, 3, tablespoons, 2
+0, 4, tablespoons, 2
