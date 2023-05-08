@@ -26,8 +26,8 @@ def get_recipe(recipe_id: int):
     return recipe
 
 class recipe_sort_options(str, Enum):
-    recipe = "recipe"
-    time = "time"
+    movie_title = "recipe"
+    character = "time"
 
 @router.get("/recipes/", tags=["recipes"])
 def list_recipe(recipe: str = "",
