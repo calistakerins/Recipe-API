@@ -1,5 +1,4 @@
 import csv
-from src.datatypes import Character, Movie, Conversation, Line
 import os
 import io
 from supabase import Client, create_client
@@ -36,7 +35,10 @@ conn = engine.connect()
 
 metadata_obj = sqlalchemy.MetaData()
 
-conversations = sqlalchemy.Table("conversations", metadata_obj, autoload_with=engine)
-lines = sqlalchemy.Table("lines", metadata_obj, autoload_with=engine)
-movies = sqlalchemy.Table("movies", metadata_obj, autoload_with=engine)
-characters = sqlalchemy.Table("characters", metadata_obj, autoload_with=engine)
+recipes = sqlalchemy.Table("recipes", metadata_obj, autoload_with=engine)
+ingredients = sqlalchemy.Table("ingredients", metadata_obj, autoload_with=engine)
+ingredient_quantities = sqlalchemy.Table("ingredient_quantities", metadata_obj, autoload_with=engine)
+cuisine_type = sqlalchemy.Table("cuisine_type", metadata_obj, autoload_with=engine)
+meal_type = sqlalchemy.Table("meal_type", metadata_obj, autoload_with=engine)
+favorited_recipes = sqlalchemy.Table("favorited_recipes", metadata_obj, autoload_with=engine)
+user = sqlalchemy.Table("user", metadata_obj, autoload_with=engine)
