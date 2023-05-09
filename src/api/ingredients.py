@@ -82,7 +82,7 @@ def add_ingredient(ingredient: IngredientJson):
     This endpoint will return the new id of the ingredient created. 
     """
     stmt = sqlalchemy.select(
-        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name.upper() == ingredient.ingredient_name.upper())
+        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name)
 
     with db.engine.begin() as conn:
       check_valid = conn.execute(stmt)
