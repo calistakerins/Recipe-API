@@ -24,12 +24,18 @@ def get_recipe(recipe_id: int):
     """
     json = None
 
-    stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+    stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
+                db.recipes.c.recipe_name,
+                db.recipes.c.calories,
+                db.recipes.c.prep_time_mins,
+                db.recipes.c.recipe_instructions,
+                db.recipes.c.recipe_url
+            ).where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
         for row in result:
-            json= {
+            json = {
                 "recipe_id": row.recipe_id,
                 "recipe_name": row.recipe_name,
                 "calories": row.calories,
