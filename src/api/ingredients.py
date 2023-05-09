@@ -52,15 +52,11 @@ def get_ingredients(ingr_id: int):
             db.ingredients.c.ingredient_cost_usd,
         ).where(db.ingredients.c.ingredient_id == ingr_id)
     
-    stmt = sqlalchemy.select(
-        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name.upper())
 
-    with db.engine.begin() as conn:
-      check_valid = conn.execute(stmt)
-      if check_valid .rowcount > 0:
-        raise HTTPException(status_code=404, detail="ingredient already exists")
-
-
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="ingredient not found")
         json ={}
         for row in result:
           json["ingredient_id"] = row.ingredient_id
@@ -70,6 +66,7 @@ def get_ingredients(ingr_id: int):
 
 
     return json
+
 
 class IngredientJson(BaseModel):
     ingredient_name: str
@@ -84,9 +81,15 @@ def add_ingredient(ingredient: IngredientJson):
     
     This endpoint will return the new id of the ingredient created. 
     """
-
+    stmt = sqlalchemy.select(
+        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name.upper())
 
     with db.engine.begin() as conn:
+      check_valid = conn.execute(stmt)
+      if check_valid .rowcount > 0:
+        raise HTTPException(status_code=404, detail="ingredient already exists")
+
+
       ingredient_num_ids = conn.execute(sqlalchemy.select(func.max(db.ingredients.c.ingredient_id)))
       for row in ingredient_num_ids:
         ingredient_id = row[0] + 1
