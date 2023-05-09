@@ -27,3 +27,22 @@ def test_list_recipes():
 def test_list_recipes2():
     response = client.get("recipes/?recipe=chicken&limit=50&offset=0&sort=recipe")
     assert response.status_code == 404
+    
+def test_add_recipe():
+    response = client.post(
+        f"/recipes/",
+        json={
+            "recipe": "baked potato",
+            "cuisine": "american",
+            "meal_type": "breakfast",
+            "calories": 600,
+            "time": 20,
+            "ingredients": [{
+            "ingrd": "potato",
+            "ingrd_cost": 1.50,
+            "unit_type": "potato",
+            "amount": 1
+            }
+        ]}
+    )
+    assert response.status_code == 200
