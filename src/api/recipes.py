@@ -277,8 +277,10 @@ def list_recipe(recipe: str = "",
 #           return "Please provide an old ingredient name to update"
 
 
-def get_user_id(username):
+def get_user_id(username: str):
     stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
+
+    user_id = -1
 
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
@@ -301,6 +303,8 @@ def favorite_recipe(username: str,
     #check if recipe is already in favorites
     #add recipe to favorites
 
+    user_id = get_user_id(username)
+
     stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
@@ -308,13 +312,12 @@ def favorite_recipe(username: str,
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
         
-    stmt = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id)
+    stmt = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
         if result.rowcount != 0:
             raise HTTPException(status_code=422, detail="Recipe already favorited.")
         
-    user_id = get_user_id(username)
     json = {"recipe_id": recipe_id,
             "user_id": user_id,
             "date_favorited": datetime.datetime.now().toString()
