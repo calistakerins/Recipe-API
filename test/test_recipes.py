@@ -25,5 +25,5 @@ def test_list_recipes():
         assert response.json() == json.load(f)
 
 def test_list_recipes2():
-    response = client.get("/recipes/?recipe_name=chicken")
+    response = client.get("recipes/?recipe=chicken&limit=50&offset=0&sort=recipe")
     assert response.status_code == 404
