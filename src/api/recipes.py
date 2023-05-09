@@ -33,6 +33,7 @@ def get_recipe(recipe_id: int):
     * `meal_type`: The meal type that the recipe is from (breakfast, lunch, dinner, ect).
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
     * `time`: The total time it takes to make the recipe.
+    Returns the recipe id of the new recipe.
     """
     json = None
 
