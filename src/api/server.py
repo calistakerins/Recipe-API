@@ -2,19 +2,30 @@ from fastapi import FastAPI
 from src.api import ingredients, recipes, pkg_util
 
 description = """
-Movie API returns dialog statistics on top hollywood movies from decades past.
+Recipes API returns important information related to different recipes.
 
-## Characters
+## Recipes
 
 You can:
-* **list characters with sorting and filtering options.**
-* **retrieve a specific character by id**
+* **retrieve a specific recipe by id.**
+* **list recipes with sorting and filtering options.**
 
-## Movies
+## Recipes
 
 You can:
 * **list movies with sorting and filtering options.**
 * **retrieve a specific movie by id**
+* **add a recipe to the database**
+* **modify an existing recipe**
+* **favorite a recipe**
+* **view your favorited recipes**
+
+## Ingriedients
+
+You can:
+* **list ingredients with sorting and filtering options.**
+* **retrieve a specific ingredient by id**
+
 """
 tags_metadata = [
     {
