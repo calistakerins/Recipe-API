@@ -298,6 +298,8 @@ def favorite_recipe(username: str,
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
     It will write the recipe_id to the favorite_recipes database.
+    It should return a Validation Error (422) if the recipe is already favorited.
+    For testing purposes, use the username 'lpierce'.
     """
     #check if recipe exists
     #check if recipe is already in favorites
