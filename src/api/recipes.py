@@ -118,8 +118,21 @@ def modify_recipe(recipe_id: int,
     """
     return
 
+def get_user_id(username):
+    stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.username == username)
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        for row in result:
+            user_id = row.user_id
+    
+    return user_id
+
+
 #add username to parameters
-def favorite_recipe(recipe_id: int, user_id: int
+@router.get("/users/{username}/recipes/{recipe_id}", tags=["recipes"])
+def favorite_recipe(username: str, 
+    recipe_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
@@ -129,7 +142,7 @@ def favorite_recipe(recipe_id: int, user_id: int
     #check if recipe is already in favorites
     #add recipe to favorites
 
-    """ stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+    stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
@@ -142,13 +155,18 @@ def favorite_recipe(recipe_id: int, user_id: int
         if result.rowcount != 0:
             raise HTTPException(status_code=422, detail="Recipe already favorited.")
         
+    user_id = get_user_id(username)
     json = {"recipe_id": recipe_id,
             "user_id": user_id,
             "date_favorited": datetime.datetime.now().toString()
     }
-    stmt = db.favorite_recipes.insert() """
 
-    return None
+    stmt = sqlalchemy.insert(db.favorite_recipes)
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt, json)
+    
+
+    return result
 
 def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
