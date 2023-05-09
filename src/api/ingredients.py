@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from enum import Enum
 import sqlalchemy
 from sqlalchemy import desc, func, select
-
+from pydantic import BaseModel
 from src import database as db
 from fastapi.params import Query
 
@@ -34,7 +34,7 @@ def list_recipes_with_ingredient(ingr_id: int):
           json.append(row.recipe_name)
         return json
 
-@router.get("/ingredients/{ingredient_id}", tags=["ingredients"])
+@router.get("/ingredients/{ingr_id}", tags=["ingredients"])
 def get_ingredients(ingr_id: int):
     """
     This endpoint returns a single ingredient by its identifier. For each ingredient
@@ -57,15 +57,51 @@ def get_ingredients(ingr_id: int):
         result = conn.execute(stmt)
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="ingredient not found")
-        json = []
+        json ={}
         for row in result:
-          json.append({
-              "ingredient_id": row.ingredient_id,
-              "ingredient_name": row.ingredient_name,
-              "ingredient_cost_usd": "$" + str(row.ingredient_cost_usd),
-              "recipes": list_recipes_with_ingredient(ingr_id)
-
-          })
+          json["ingredient_id"] = row.ingredient_id
+          json["ingredient_name"] = row.ingredient_name
+          json["ingredient_cost_usd"] = "$" + str(row.ingredient_cost_usd)
+          json["recipes"] = list_recipes_with_ingredient(ingr_id)
 
 
     return json
+
+
+class IngredientJson(BaseModel):
+    ingredient_name: str
+    ingredient_cost_usd: int
+
+
+@router.post("/ingredients/", tags=["ingredients"])
+def add_ingredient(ingredient: IngredientJson):
+    """
+    This endpoint adds a single ingredient. A new ingredient is represented by its name,
+    and its cost. 
+    
+    This endpoint will return the new id of the ingredient created. 
+    """
+    stmt = sqlalchemy.select(
+        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name)
+
+    with db.engine.begin() as conn:
+      check_valid = conn.execute(stmt)
+      if check_valid .rowcount > 0:
+        raise HTTPException(status_code=404, detail="ingredient already exists")
+
+
+      ingredient_num_ids = conn.execute(sqlalchemy.select(func.max(db.ingredients.c.ingredient_id)))
+      for row in ingredient_num_ids:
+        ingredient_id = row[0] + 1
+
+      conn.execute(
+              sqlalchemy.insert(db.ingredients),
+              [
+                  {"ingredient_id": ingredient_id,
+                  "ingredient_name": ingredient.ingredient_name,
+                  "ingredient_cost_usd": ingredient.ingredient_cost_usd},
+              ],
+          
+      )
+
+    return {"ingredient_id": ingredient_id} 
