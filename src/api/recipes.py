@@ -5,6 +5,9 @@ from src import database as db
 from fastapi.params import Query
 import sqlalchemy
 from sqlalchemy import desc, func, select
+from typing import List
+from pydantic import BaseModel
+
 
 router = APIRouter()
 
@@ -49,6 +52,35 @@ def get_recipe(recipe_id: int):
 
     return json
 
+def ListMealTypes(recipe_id: int):
+    stmt = sqlalchemy.select(
+            db.meal_type.c.meal_type,
+        ).where(db.meal_type.c.recipe_id == recipe_id)
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="recipe not found")
+        json = []
+        for row in result:
+            json.append(row.meal_type)
+        return json
+
+def ListCuisineTypes(recipe_id: int):
+    stmt = sqlalchemy.select(
+            db.cuisine_type.c.cuisine_type,
+        ).where(db.cuisine_type.c.recipe_id == recipe_id)
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="recipe not found")
+        json = []
+        for row in result:
+            json.append(row.cuisine_type)
+        return json
+    
+
+    
+
 class recipe_sort_options(str, Enum):
     recipe = "recipe"
     time = "time"
@@ -84,7 +116,37 @@ def list_recipe(recipe: str = "",
     The `offset` query parameter specifies the number of results to skip before
     returning results.
     """
-    return
+    if sort == recipe_sort_options.recipe:
+        sort_by = db.recipes.c.recipe_name
+    elif sort == recipe_sort_options.time:
+        sort_by = db.recipes.c.prep_time_mins
+    
+    stmt = (
+        sqlalchemy.select(db.recipes.c.recipe_id,
+                          db.recipes.c.recipe_name,
+                          db.recipes.c.prep_time_mins).select_from(db.recipes.join(db.cuisine_type, db.recipes.c.recipe_id == db.cuisine_type.c.recipe_id).join(db.meal_type, db.recipes.c.recipe_id == db.meal_type.c.recipe_id))
+                          .order_by(sort_by).limit(limit).offset(offset).distinct()
+
+     )
+    
+    if recipe != "":
+        stmt = stmt.where(db.recipes.c.recipe_name.ilike(f"%{recipe}%"))
+
+    if cuisine != "":
+        stmt = stmt.where(db.cuisine_type.c.cuisine_type.ilike(f"%{cuisine}%"))
+
+    if meal_type != "":
+        stmt = stmt.where(db.meal_type.c.meal_type.ilike(f"%{meal_type}%"))
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="no recipes found")
+        json = {}
+        json["recipes"] = []
+        for row in result:
+            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": ListCuisineTypes(row[0]), "meal_type": ListMealTypes(row[0]), "time": str(row[2]) + " minutes"})
+        return json
 
 class meal_typeJson(BaseModel):
     meal_type_id: int
@@ -93,17 +155,17 @@ class cuisine_typeJson(BaseModel):
     cuisine_type_id: int
     
 class RecipeJson(BaseModel):
-    recipe_name: string
+    recipe_name: str
     cusine_type: List[cuisine_typeJson]
     meal_type: List[meal_typeJson]
     calories: int
     prep_time_mins: int
     recipe_instructions: int
-    recipe_url: string
+    recipe_url: str
 
 class IngredientQuantityJson(BaseModel):
     ingredient_id: int
-    unit_type: string
+    unit_type: str
     amount: int
 
 class QuantitiesJson(BaseModel):
