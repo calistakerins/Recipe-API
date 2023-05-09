@@ -52,11 +52,15 @@ def get_ingredients(ingr_id: int):
             db.ingredients.c.ingredient_cost_usd,
         ).where(db.ingredients.c.ingredient_id == ingr_id)
     
+    stmt = sqlalchemy.select(
+        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name.upper())
 
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="ingredient not found")
+    with db.engine.begin() as conn:
+      check_valid = conn.execute(stmt)
+      if check_valid .rowcount > 0:
+        raise HTTPException(status_code=404, detail="ingredient already exists")
+
+
         json ={}
         for row in result:
           json["ingredient_id"] = row.ingredient_id
