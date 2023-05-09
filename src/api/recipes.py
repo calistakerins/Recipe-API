@@ -278,7 +278,7 @@ def list_recipe(recipe: str = "",
 
 
 def get_user_id(username):
-    stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.username == username)
+    stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
 
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
