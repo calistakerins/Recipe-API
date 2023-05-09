@@ -9,12 +9,6 @@ Recipes API returns important information related to different recipes.
 You can:
 * **retrieve a specific recipe by id.**
 * **list recipes with sorting and filtering options.**
-
-## Recipes
-
-You can:
-* **list movies with sorting and filtering options.**
-* **retrieve a specific movie by id**
 * **add a recipe to the database**
 * **modify an existing recipe**
 * **favorite a recipe**
