@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from enum import Enum
 import sqlalchemy
 from sqlalchemy import desc, func, select
-
+from pydantic import BaseModel
 from src import database as db
 from fastapi.params import Query
 
