@@ -238,44 +238,58 @@ def add_recipe(recipe: str,
         conn.execute(db.ingredient_quantities.insert().values(**quantity_data))
       return recipe_id
 
-# def modify_recipe(recipe_id: int,
-#     old_ingredient: str = "",
-#     new_ingredient: str = "",
-#     new_amount: str = "",
-#     ):
-#     """
-#     This endpoint will allow users to modify an ingredient in an existing recipe. 
-#     The user will be able to change the name of an ingredient or the amount of an ingredient.
-#     If the string of an old ingredient matches an ingredient in the recipe,
-#     the ingredient will be changed to the new ingredient. The user can also change the
-#     amount of an ingredient used in the recipe with the new_amount parameter. 
-#     """
-#     with db.engine.connect() as conn:
-#       if old_ingredient:
-#           ingredient_id_query = select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == old_ingredient)
-#           result = conn.execute(ingredient_id_query).fetchone()
-#           if result is None:
-#               return f"Ingredient '{old_ingredient}' not found in recipe with ID {recipe_id}"
-#           old_ingredient_id = result[0]
-          
-#           update_query = update(db.ingredient_quantities).where(
-#               (db.ingredient_quantities.c.recipe_id == recipe_id) & 
-#               (db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
-#           )
-#           if new_ingredient:
-#               ingredient_id_query = select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == new_ingredient)
-#               result = conn.execute(ingredient_id_query).fetchone()
-#               if result is None:
-#                   return f"Ingredient '{new_ingredient}' not found in ingredients table"
-#               new_ingredient_id = result[0]
-#               update_query = update_query.values(ingredient_id=new_ingredient_id)
-#           if new_amount:
-#               update_query = update_query.values(amount=new_amount)
-#           conn.execute(update_query)
-#           return f"Ingredient '{old_ingredient}' updated to '{new_ingredient}' and amount updated to '{new_amount}' in recipe with ID {recipe_id}"
-#       else:
-#           return "Please provide an old ingredient name to update"
-
+@router.post("/recipes/{recipe_id}", tags=["recipes"])
+def modify_recipe(recipe_id: int,
+    old_ingredient: str,
+    new_ingredient: str,
+    new_amount: str, new_ingredient_cost: float,
+    ):
+    """
+    This endpoint will allow users to modify an ingredient in an existing recipe. 
+    The user will be able to change the name of an ingredient or the amount of an ingredient.
+    If the string of an old ingredient matches an ingredient in the recipe,
+    the ingredient will be changed to the new ingredient. The user can also change the
+    amount of an ingredient used in the recipe with the new_amount parameter. 
+    """
+    with db.engine.connect() as conn:
+      if old_ingredient:
+          recipe_query = select(db.ingredients.c.ingredient_name).\
+                    select_from(join(db.ingredient_quantities, db.ingredients,
+                                     db.ingredient_quantities.c.ingredient_id == db.ingredients.c.ingredient_id)).\
+                    where(and_(db.ingredient_quantities.c.recipe_id == recipe_id,
+                               db.ingredients.c.ingredient_name == old_ingredient))
+          recipe_result = conn.execute(recipe_query).fetchall()
+          if len(recipe_result) == 0:
+              return f"Ingredient '{old_ingredient}' not found in recipe with ID {recipe_id}"
+          old_ingredient_id = conn.execute(db.ingredients.select().where(db.ingredients.c.ingredient_name == old_ingredient)).fetchone()[0]
+          update_query = update(db.ingredient_quantities).where(
+              (db.ingredient_quantities.c.recipe_id == recipe_id) & 
+              (db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
+          )
+          if new_ingredient:
+              ingredient_id_query = select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == new_ingredient)
+              result = conn.execute(ingredient_id_query).fetchone()
+              if result is None:
+                  new_ingredient_id = conn.execute(
+                      sqlalchemy.select(sqlalchemy.func.max(db.ingredients.c.ingredient_id))
+                  ).scalar()
+                  new_ingredient_id += 1
+                  ingredient_cost_usd = new_ingredient_cost
+                  ingredient_data = {
+                      "ingredient_id": new_ingredient_id,
+                      "ingredient_name": new_ingredient,
+                      "ingredient_cost_usd": ingredient_cost_usd,
+                  }
+                  conn.execute(db.ingredients.insert().values(**ingredient_data))
+              else:
+                new_ingredient_id = result[0]
+              update_query = update_query.values(ingredient_id=new_ingredient_id)
+          if new_amount:
+              update_query = update_query.values(amount=new_amount)
+          conn.execute(update_query)
+          return f"Ingredient '{old_ingredient}' updated to '{new_ingredient}' and amount updated to '{new_amount}' in recipe with ID {recipe_id}"
+      else:
+          return "Please provide an old ingredient name to update"
 
 def get_user_id(username: str):
     stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
