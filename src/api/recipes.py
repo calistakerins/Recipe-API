@@ -30,12 +30,12 @@ def get_recipe(recipe_id: int):
         result = conn.execute(stmt)
         for row in result:
             json= {
-                "recipe_id": result.recipe_id,
-                "recipe_name": result.recipe_name,
-                "calories": result.calories,
-                "prep_time_mins": result.prep_time_mins,
-                "recipe_instructions": result.recipe_instructions,
-                "recipe_url": result.recipe_url
+                "recipe_id": row.recipe_id,
+                "recipe_name": row.recipe_name,
+                "calories": row.calories,
+                "prep_time_mins": row.prep_time_mins,
+                "recipe_instructions": row.recipe_instructions,
+                "recipe_url": row.recipe_url
             }
 
     if json is None:
