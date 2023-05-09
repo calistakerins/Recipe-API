@@ -86,21 +86,32 @@ def list_recipe(recipe: str = "",
     """
     return
 
+class meal_typeJson(BaseModel):
+    meal_type_id: int
 
-def add_recipe(recipe: str,
-    cuisine: str,
-    meal_type: str,
-    ingredients: list[dict],
-    time: int):
+class cuisine_typeJson(BaseModel):
+    cuisine_type_id: int
+    
+class RecipeJson(BaseModel):
+    recipe_name: string
+    cusine_type: List[cuisine_typeJson]
+    meal_type: List[meal_typeJson]
+    calories: int
+    prep_time_mins: int
+    recipe_instructions: int
+    recipe_url: string
+
+class IngredientQuantityJson(BaseModel):
+    ingredient_id: int
+    unit_type: string
+    amount: int
+
+class QuantitiesJson(BaseModel):
+    ingredientQuantities = List[IngredientQuantityJson]
+
+def add_recipe(recipe_id: int, recipes: RecipeJson, quantities: QuantitiesJson):
     """
-    This endpoint will allow users to add their own recipes to the API. To add a recipie, the
-    user must provide:
-    * `recipe`: The name of the recipe.
-    * `cuisine`: The cuisine that the recipe is from.
-    * `meal_type`: The meal type that the recipe is from.
-    * `ingredients`: The list that contains the ingredients and amounts
-      that are needed to make the recipe.
-    * `time`: The total time it takes to make the recipe.
+    This endpoint will allow users to add their own recipes to the API. 
     """
     return 
 
