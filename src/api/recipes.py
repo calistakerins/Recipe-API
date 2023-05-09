@@ -320,7 +320,7 @@ def favorite_recipe(username: str,
         
     json = {"recipe_id": recipe_id,
             "user_id": user_id,
-            "date_favorited": datetime.datetime.now().toString()
+            "date_favorited": str(datetime.datetime.now())
     }
 
     stmt = sqlalchemy.insert(db.favorite_recipes)
