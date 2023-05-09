@@ -57,13 +57,12 @@ def get_ingredients(ingr_id: int):
         result = conn.execute(stmt)
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="ingredient not found")
-        json ={
-              "ingredient_id": row.ingredient_id,
-              "ingredient_name": row.ingredient_name,
-              "ingredient_cost_usd": "$" + str(row.ingredient_cost_usd),
-              "recipes": list_recipes_with_ingredient(ingr_id)
-
-          }
+        json ={}
+        for row in result:
+          json["ingredient_id"] = row.ingredient_id
+          json["ingredient_name"] = row.ingredient_name
+          json["ingredient_cost_usd"] = "$" + str(row.ingredient_cost_usd)
+          json["recipes"] = list_recipes_with_ingredient(ingr_id)
 
 
     return json
