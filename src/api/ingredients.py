@@ -9,7 +9,6 @@ from fastapi.params import Query
 
 router = APIRouter()
 
-@router.get("/recipes_with_ingredient/{ingredient_id}", tags=["ingredients"])
 def list_recipes_with_ingredient(ingr_id: int):
     """
     This endpoint returns a list of the recipes that contain a certain ingredient. For each recipe it returns:
