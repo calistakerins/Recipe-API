@@ -34,7 +34,7 @@ def list_recipes_with_ingredient(ingr_id: int):
           json.append(row.recipe_name)
         return json
 
-@router.get("/ingredients/{ingredient_id}", tags=["ingredients"])
+@router.get("/ingredients/{ingr_id}", tags=["ingredients"])
 def get_ingredients(ingr_id: int):
     """
     This endpoint returns a single ingredient by its identifier. For each ingredient
