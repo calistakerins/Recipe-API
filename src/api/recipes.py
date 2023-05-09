@@ -167,11 +167,12 @@ class IngredientQuantityJson(BaseModel):
     ingredient_id: int
     unit_type: str
     amount: int
-
+"""
 class QuantitiesJson(BaseModel):
     ingredientQuantities = List[IngredientQuantityJson]
+"""
 
-def add_recipe(recipe_id: int, recipes: RecipeJson, quantities: QuantitiesJson):
+def add_recipe(recipe_id: int, recipes: RecipeJson):
     """
     This endpoint will allow users to add their own recipes to the API. 
     """
