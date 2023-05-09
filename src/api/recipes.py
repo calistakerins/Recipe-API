@@ -1,7 +1,10 @@
+import datetime
 from fastapi import APIRouter, HTTPException
 from enum import Enum
 from src import database as db
 from fastapi.params import Query
+import sqlalchemy
+from sqlalchemy import desc, func, select
 
 router = APIRouter()
 
@@ -19,11 +22,26 @@ def get_recipe(recipe_id: int):
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
     * `time`: The total time it takes to make the recipe.
     """
+    json = None
 
-    recipe = db.get_recipe(recipe_id)
-    if recipe is None:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return recipe
+    stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        for row in result:
+            json= {
+                "recipe_id": result.recipe_id,
+                "recipe_name": result.recipe_name,
+                "calories": result.calories,
+                "prep_time_mins": result.prep_time_mins,
+                "recipe_instructions": result.recipe_instructions,
+                "recipe_url": result.recipe_url
+            }
+
+    if json is None:
+            raise HTTPException(status_code=404, detail="Recipe not found.")
+
+    return json
 
 class recipe_sort_options(str, Enum):
     recipe = "recipe"
@@ -94,13 +112,36 @@ def modify_recipe(recipe_id: int,
     """
     return
 
-def favorite_recipe(recipe_id: int,
+def favorite_recipe(recipe_id: int, user_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
     It will write the recipe_id to the favorite_recipes database.
     """
-    return
+    #check if recipe exists
+    #check if recipe is already in favorites
+    #add recipe to favorites
+
+    """ stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Recipe not found.")
+        
+    stmt = sqlalchemy.select(db.favorite_recipes.c.recipe_id).where(db.favorite_recipes.c.recipe_id == recipe_id)
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        if result.rowcount != 0:
+            raise HTTPException(status_code=422, detail="Recipe already favorited.")
+        
+    json = {"recipe_id": recipe_id,
+            "user_id": user_id,
+            "date_favorited": datetime.datetime.now().toString()
+    }
+    stmt = db.favorite_recipes.insert() """
+
+    return None
 
 def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
