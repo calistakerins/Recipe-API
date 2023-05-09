@@ -318,10 +318,10 @@ def favorite_recipe(username: str,
         if result.rowcount != 0:
             raise HTTPException(status_code=422, detail="Recipe already favorited.")
         
-    json = {"recipe_id": recipe_id,
+    json = [{"recipe_id": recipe_id,
             "user_id": user_id,
             "date_favorited": str(datetime.datetime.now())
-    }
+    }]
 
     stmt = sqlalchemy.insert(db.favorite_recipes)
     with db.engine.connect() as conn:
