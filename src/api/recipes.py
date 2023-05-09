@@ -300,14 +300,17 @@ def get_user_id(username: str):
         result = conn.execute(stmt)
         for row in result:
             user_id = row.user_id
-    
+
+    if user_id == -1:
+        raise HTTPException(status_code=404, detail="user not found")
     return user_id
 
 
+
+
 #add username to parameters
-@router.get("/users/{username}/recipes/{recipe_id}", tags=["recipes"])
-def favorite_recipe(username: str, 
-    recipe_id: int
+@router.post("/favorited_recipes/", tags=["favorited_recipes"])
+def favorite_recipe(username: str, recipe_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
@@ -318,33 +321,31 @@ def favorite_recipe(username: str,
     #check if recipe exists
     #check if recipe is already in favorites
     #add recipe to favorites
-
     user_id = get_user_id(username)
 
     stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+    stmt_2 = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
 
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount == 0:
+
+    with db.engine.begin() as conn:
+        check_recipe_valid = conn.execute(stmt)
+        if check_recipe_valid.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
-        
-    stmt = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount != 0:
+        check_recipe_valid2 = conn.execute(stmt_2)
+        if check_recipe_valid2.rowcount != 0:
             raise HTTPException(status_code=422, detail="Recipe already favorited.")
         
-    json = [{"recipe_id": recipe_id,
-            "user_id": user_id,
-            "date_favorited": str(datetime.datetime.now())
-    }]
+        conn.execute(
+                  sqlalchemy.insert(db.favorited_recipes),
+                  [
+                    {"recipe_id": recipe_id,
+                    "user_id": user_id,
+                    "date_favorited": str(datetime.datetime.now())}
+                  ]
+            )
 
-    stmt = sqlalchemy.insert(db.favorited_recipes)
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt, json)
-    
-
-    return result
+    return {"recipe_id": recipe_id,
+            "user_id": user_id} 
 
 def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
