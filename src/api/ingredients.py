@@ -69,3 +69,35 @@ def get_ingredients(ingr_id: int):
 
 
     return json
+
+class IngredientJson(BaseModel):
+    ingredient_name: str
+    ingredient_cost_usd: int
+
+
+@router.post("/ingredients/", tags=["ingredients"])
+def add_ingredient(ingredient: IngredientJson):
+    """
+    This endpoint adds a single ingredient. A new ingredient is represented by its name,
+    and its cost. 
+    
+    This endpoint will return the new id of the ingredient created. 
+    """
+
+
+    with db.engine.begin() as conn:
+      ingredient_num_ids = conn.execute(sqlalchemy.select(func.max(db.ingredients.c.ingredient_id)))
+      for row in ingredient_num_ids:
+        ingredient_id = row[0] + 1
+
+      conn.execute(
+              sqlalchemy.insert(db.ingredients),
+              [
+                  {"ingredient_id": ingredient_id,
+                  "ingredient_name": ingredient.ingredient_name,
+                  "ingredient_cost_usd": ingredient.ingredient_cost_usd},
+              ],
+          
+      )
+
+    return {"ingredient_id": ingredient_id} 
