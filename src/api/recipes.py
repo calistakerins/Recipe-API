@@ -149,7 +149,7 @@ def favorite_recipe(username: str,
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
         
-    stmt = sqlalchemy.select(db.favorite_recipes.c.recipe_id).where(db.favorite_recipes.c.recipe_id == recipe_id)
+    stmt = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id)
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
         if result.rowcount != 0:
