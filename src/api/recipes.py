@@ -87,7 +87,7 @@ def get_cuisine_type(recipe_id: int):
         for row in cuisine_result:
             cuisines.append(row.cuisine_type)
     
-    return cuisine_result
+    return cuisines
 
 def get_ingredients(recipe_id: int):
     find_ingriedients_stmt = sqlalchemy.select(
