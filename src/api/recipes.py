@@ -111,8 +111,8 @@ def get_ingredients(recipe_id: int):
 
 def get_number_of_favorites(recipe_id: int):
     find_favorite_stmt = sqlalchemy.select(
-            db.favorites.c.user_id,
-        ).where(db.favorites.c.recipe_id == recipe_id)
+            db.favorited_recipes.c.user_id,
+        ).where(db.favorited_recipes.c.recipe_id == recipe_id)
     
     with db.engine.connect() as conn:
         favorite_result = conn.execute(find_favorite_stmt)
