@@ -105,7 +105,7 @@ def get_ingredients(recipe_id: int):
         
         ingriedients = []
         for row in ingredients_result:
-            ingriedient_string = str(row.ingriedient_name) + ": " + str(row.amount) + " " + str(row.unit_type)
+            ingriedient_string = str(row.ingredient_name) + ": " + str(row.amount) + " " + str(row.unit_type)
             ingriedients.append(ingriedient_string)
         return ingriedients
 
