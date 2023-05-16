@@ -1,0 +1,16 @@
+{
+    "recipes": [
+      {
+        "recipe_id": 0,
+        "recipe_name": "Chorizo Street Tacos",
+        "cuisine": [
+          "Mexican"
+        ],
+        "meal_type": [
+          " Dinner",
+          " Lunch"
+        ],
+        "time": "20 minutes"
+      }
+    ]
+  }
