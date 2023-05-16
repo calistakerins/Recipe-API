@@ -30,37 +30,95 @@ def get_recipe(recipe_id: int):
       `/recipes/{id}` endpoint.
     * `recipe_name`: The name of the recipe.
     * `cuisine`: The cuisine that the recipe is from.
-    * `meal_type`: The meal type that the recipe is from (breakfast, lunch, dinner, ect).
+    * `meal_type`: The meal type that the recipe is from (breakfast, lunch, dinner, etc).
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
-    * `time`: The total time it takes to make the recipe.
-    Returns the recipe id of the new recipe.
+    * `prep_time_mins`: The total time needed to prep the recipe in minutes.
+    * `instructions`: The instructions needed to make the recipe.
+    * `number_of_favorites`: The number of users that have favorited the recipe.
     """
     json = None
 
-    stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
-                db.recipes.c.recipe_name,
-                db.recipes.c.calories,
-                db.recipes.c.prep_time_mins,
-                db.recipes.c.recipe_instructions,
-                db.recipes.c.recipe_url
-            ).where(db.recipes.c.recipe_id == recipe_id)
+    find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
+                db.recipes.c.recipe_name, db.recipes.c.prep_time_mins, db.recipes.c.recipe_instructions).\
+                where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        for row in result:
+        recipe_result = conn.execute(find_recipe_stmt)
+        for row in recipe_result:
             json = {
                 "recipe_id": row.recipe_id,
                 "recipe_name": row.recipe_name,
-                "calories": row.calories,
+                "cuisine": get_cuisine_type(row.cuisine_id), 
+                "meal_type": get_meal_type(row.meal_type_id),
+                "ingredients": get_ingredients(row.recipe_id),
                 "prep_time_mins": row.prep_time_mins,
-                "recipe_instructions": row.recipe_instructions,
-                "recipe_url": row.recipe_url
+                "instructions": row.recipe_instructions,
+                "number_of_favorites": get_number_of_favorites(row.recipe_id)
             }
 
     if json is None:
             raise HTTPException(status_code=404, detail="Recipe not found.")
 
     return json
+
+def get_meal_type(recipe_id: int):
+    find_meal_types = sqlalchemy.select(
+            db.meal_type.c.meal_type,
+        ).select_from(db.meal_type.join(db.recipe_meal_types, db.recipe_meal_types.c.recipe_id == recipe_id))
+    
+    with db.engine.connect() as conn:
+        meal_type_result = conn.execute(find_meal_types)
+        if meal_type_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="meal type not found")
+    
+    return meal_type_result
+
+def get_cuisine_type(recipe_id: int):
+    find_cuisine_stmt = sqlalchemy.select(
+            db.cuisine_type.c.cuisine_type,
+        ).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.recipe_cuisine_types.c.recipe_id == recipe_id))
+    
+    with db.engine.connect() as conn:
+        cuisine_result = conn.execute(find_cuisine_stmt)
+        if cuisine_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="cuisine type not found")
+    
+    return cuisine_result
+
+def get_ingredients(recipe_id: int):
+    find_ingriedients_stmt = sqlalchemy.select(
+            db.ingredient_quantities.c.ingredient_id,
+            db.ingredient_quantities.c.amount,
+            db.ingredient_quantities.c.unit_type,
+            db.ingredients.c.ingredient_name,
+    ).select_from(db.ingredient_quantities.join(db.ingredients, db.ingredients.c.ingredient_id == db.ingredient_quantities.c.ingredient_id)).\
+        where(db.ingredient_quantities.c.recipe_id == recipe_id)
+    
+    with db.engine.connect() as conn:
+        ingredients_result = conn.execute(find_ingriedients_stmt)
+        if ingredients_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="no ingredients found matching recipe_id")
+        
+        ingriedients_json = []
+        for row in ingredients_result:
+            ingriedients_json.append({
+                "ingredient_id": row.ingredient_id,
+                "ingredient_name": row.ingredient_name,
+                "amount": row.amount,
+                "unit_type": row.unit_type
+            })
+        return ingriedients_json
+
+def get_number_of_favorites(recipe_id: int):
+    find_favorite_stmt = sqlalchemy.select(
+            db.favorites.c.user_id,
+        ).where(db.favorites.c.recipe_id == recipe_id)
+    
+    with db.engine.connect() as conn:
+        favorite_result = conn.execute(find_favorite_stmt)
+        if favorite_result.rowcount == 0:
+            return 0
+        return favorite_result.rowcount
 
 def ListMealTypes(recipe_id: int):
     stmt = sqlalchemy.select(
@@ -291,6 +349,7 @@ def modify_recipe(recipe_id: int,
       else:
           return "Please provide an old ingredient name to update"
 
+
 def get_user_id(username: str):
     stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
 
@@ -304,6 +363,7 @@ def get_user_id(username: str):
     if user_id == -1:
         raise HTTPException(status_code=404, detail="user not found")
     return user_id
+
 
 
 
@@ -347,7 +407,8 @@ def favorite_recipe(username: str, recipe_id: int
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
 
-def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
+def list_favorite_recipes(username: str, 
+    limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
     sort: recipe_sort_options = recipe_sort_options.recipe
     ):
@@ -369,4 +430,25 @@ def list_favorite_recipes(limit: int = Query(50, ge=1, le=250),
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
-    return
+    # user_id = get_user_id(username)
+
+    # stmt = sqlalchemy.select(db.recipes.c.recipe_id, db.recipes.c.recipe_name, db.recipes.c.cuisine, db.recipes.c.meal_type, db.recipes.c.time).\
+    #         where(db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id and db.favorited_recipes.c.user_id == user_id).\
+    #         order_by(sort).\
+    #         limit(limit).\
+    #         offset(offset)
+
+    favorited_recipes = []
+    # with db.engine.connect() as conn:
+    #     favorited_results = conn.execute(stmt)
+    #     for row in favorited_results:
+    #         favorited_recipes.append({
+    #             "recipe_id": row.recipe_id,
+    #             "recipe": row.recipe_name,
+    #             "cuisine": row.cuisine,
+    #             "meal_type": row.meal_type,
+    #             "time": row.time
+    #         })
+
+
+    return favorited_recipes
