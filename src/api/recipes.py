@@ -373,31 +373,22 @@ def get_user_id(username: str):
 
 
 #add username to parameters
-@router.post("/favorited_recipes/", tags=["favorited_recipes"])
+@router.put("/favorited_recipes/", tags=["favorited_recipes"])
 def favorite_recipe(username: str, recipe_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
-    It will write the recipe_id to the favorite_recipes database.
-    It should return a Validation Error (422) if the recipe is already favorited.
     For testing purposes, use the username 'lpierce'.
     """
-    #check if recipe exists
-    #check if recipe is already in favorites
-    #add recipe to favorites
     user_id = get_user_id(username)
 
-    stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
-    stmt_2 = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
-
+    find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.begin() as conn:
-        check_recipe_valid = conn.execute(stmt)
-        if check_recipe_valid.rowcount == 0:
+        find_recipe_result = conn.execute(find_recipe_stmt)
+
+        if find_recipe_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
-        check_recipe_valid2 = conn.execute(stmt_2)
-        if check_recipe_valid2.rowcount != 0:
-            raise HTTPException(status_code=422, detail="Recipe already favorited.")
         
         conn.execute(
                   sqlalchemy.insert(db.favorited_recipes),
@@ -411,6 +402,7 @@ def favorite_recipe(username: str, recipe_id: int
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
 
+@router.get("/favorited_recipes/", tags=["favorited_recipes"])
 def list_favorite_recipes(username: str, 
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
@@ -424,7 +416,7 @@ def list_favorite_recipes(username: str,
     * `cuisine`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
-    * `time`: time needed to make the recipe.
+    * `prep_time_mins`: time needed to make the recipe.
 
     You can also sort the results by using the `sort` query parameter:
     * `recipe` - Sort by recipe name alphabetically.
@@ -434,25 +426,25 @@ def list_favorite_recipes(username: str,
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
-    # user_id = get_user_id(username)
+    user_id = get_user_id(username)
 
-    # stmt = sqlalchemy.select(db.recipes.c.recipe_id, db.recipes.c.recipe_name, db.recipes.c.cuisine, db.recipes.c.meal_type, db.recipes.c.time).\
-    #         where(db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id and db.favorited_recipes.c.user_id == user_id).\
-    #         order_by(sort).\
-    #         limit(limit).\
-    #         offset(offset)
+    stmt = sqlalchemy.select(db.recipes.c.recipe_id, db.recipes.c.recipe_name, db.recipes.c.prep_time_mins).\
+            where(db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id and db.favorited_recipes.c.user_id == user_id).\
+            order_by(sort).\
+            limit(limit).\
+            offset(offset)
 
     favorited_recipes = []
-    # with db.engine.connect() as conn:
-    #     favorited_results = conn.execute(stmt)
-    #     for row in favorited_results:
-    #         favorited_recipes.append({
-    #             "recipe_id": row.recipe_id,
-    #             "recipe": row.recipe_name,
-    #             "cuisine": row.cuisine,
-    #             "meal_type": row.meal_type,
-    #             "time": row.time
-    #         })
-
+    with db.engine.connect() as conn:
+        favorited_results = conn.execute(stmt)
+        for row in favorited_results:
+            favorited_recipes.append({
+                "recipe_id": row.recipe_id,
+                "recipe": row.recipe_name,
+                "cuisine": get_cuisine_type(row.recipe_id),
+                "meal_type": get_meal_type(row.recipe_id),
+                "ingredients": get_ingredients(row.recipe_id),
+                "prep_time_mins": row.prep_time_mins
+            })
 
     return favorited_recipes
