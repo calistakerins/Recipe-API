@@ -78,10 +78,14 @@ def get_cuisine_type(recipe_id: int):
             db.cuisine_type.c.cuisine_type,
         ).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.recipe_cuisine_types.c.recipe_id == recipe_id))
     
+    cuisines = []
     with db.engine.connect() as conn:
         cuisine_result = conn.execute(find_cuisine_stmt)
         if cuisine_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="cuisine type not found")
+        
+        for row in cuisine_result:
+            cuisines.append(row.cuisine_type)
     
     return cuisine_result
 
@@ -99,15 +103,11 @@ def get_ingredients(recipe_id: int):
         if ingredients_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="no ingredients found matching recipe_id")
         
-        ingriedients_json = []
+        ingriedients = []
         for row in ingredients_result:
-            ingriedients_json.append({
-                "ingredient_id": row.ingredient_id,
-                "ingredient_name": row.ingredient_name,
-                "amount": row.amount,
-                "unit_type": row.unit_type
-            })
-        return ingriedients_json
+            ingriedient_string = str(row.ingriedient_name) + ": " + str(row.amount) + " " + str(row.unit_type)
+            ingriedients.append(ingriedient_string)
+        return ingriedients
 
 def get_number_of_favorites(recipe_id: int):
     find_favorite_stmt = sqlalchemy.select(
@@ -116,8 +116,6 @@ def get_number_of_favorites(recipe_id: int):
     
     with db.engine.connect() as conn:
         favorite_result = conn.execute(find_favorite_stmt)
-        if favorite_result.rowcount == 0:
-            return 0
         return favorite_result.rowcount
 
 def ListMealTypes(recipe_id: int):
