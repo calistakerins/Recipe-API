@@ -49,7 +49,7 @@ def get_recipe(recipe_id: int):
                 "recipe_id": row.recipe_id,
                 "recipe_name": row.recipe_name,
                 "cuisine": get_cuisine_type(row.recipe_id), 
-                "meal_type": get_meal_type(row.meal_type_id),
+                "meal_type": get_meal_type(row.recipe_id),
                 "ingredients": get_ingredients(row.recipe_id),
                 "prep_time_mins": row.prep_time_mins,
                 "instructions": row.recipe_instructions,
