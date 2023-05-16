@@ -42,3 +42,5 @@ cuisine_type = sqlalchemy.Table("cuisine_type", metadata_obj, autoload_with=engi
 meal_type = sqlalchemy.Table("meal_type", metadata_obj, autoload_with=engine)
 favorited_recipes = sqlalchemy.Table("favorited_recipes", metadata_obj, autoload_with=engine)
 users = sqlalchemy.Table("users", metadata_obj, autoload_with=engine)
+recipe_cuisine_types = sqlalchemy.Table("recipe_cuisine_types", metadata_obj, autoload_with=engine)
+recipe_meal_types = sqlalchemy.Table("recipe_meal_types", metadata_obj, autoload_with=engine)
