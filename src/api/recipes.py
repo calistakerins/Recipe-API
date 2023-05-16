@@ -64,26 +64,32 @@ def get_recipe(recipe_id: int):
 def get_meal_type(recipe_id: int):
     find_meal_types = sqlalchemy.select(
             db.meal_type.c.meal_type,
-        ).select_from(db.meal_type.join(db.recipe_meal_types, db.recipe_meal_types.c.recipe_id == recipe_id))
+        ).select_from(db.meal_type.join(db.recipe_meal_types, db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id)).\
+        where(db.recipe_meal_types.c.recipe_id == recipe_id)
     
     with db.engine.connect() as conn:
         meal_type_result = conn.execute(find_meal_types)
         if meal_type_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="meal type not found")
+        
+        meal_types = []
+        for row in meal_type_result:
+            meal_types.append(row.meal_type)
     
-    return meal_type_result
+    return meal_types
 
 def get_cuisine_type(recipe_id: int):
     find_cuisine_stmt = sqlalchemy.select(
             db.cuisine_type.c.cuisine_type,
-        ).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.recipe_cuisine_types.c.recipe_id == recipe_id))
+        ).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id)).\
+        where(db.recipe_cuisine_types.c.recipe_id == recipe_id)
     
-    cuisines = []
     with db.engine.connect() as conn:
         cuisine_result = conn.execute(find_cuisine_stmt)
         if cuisine_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="cuisine type not found")
         
+        cuisines = []
         for row in cuisine_result:
             cuisines.append(row.cuisine_type)
     
