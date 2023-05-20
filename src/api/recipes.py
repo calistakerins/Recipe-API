@@ -115,43 +115,6 @@ def get_ingredients(recipe_id: int):
             ingriedients.append(ingriedient_string)
         return ingriedients
 
-def get_number_of_favorites(recipe_id: int):
-    find_favorite_stmt = sqlalchemy.select(
-            db.favorited_recipes.c.user_id,
-        ).where(db.favorited_recipes.c.recipe_id == recipe_id)
-    
-    with db.engine.connect() as conn:
-        favorite_result = conn.execute(find_favorite_stmt)
-        return favorite_result.rowcount
-
-def ListMealTypes(recipe_id: int):
-    stmt = sqlalchemy.select(
-            db.meal_type.c.meal_type,
-        ).where(db.meal_type.c.recipe_id == recipe_id)
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="recipe not found")
-        json = []
-        for row in result:
-            json.append(row.meal_type)
-        return json
-
-def ListCuisineTypes(recipe_id: int):
-    stmt = sqlalchemy.select(
-            db.cuisine_type.c.cuisine_type,
-        ).where(db.cuisine_type.c.recipe_id == recipe_id)
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="recipe not found")
-        json = []
-        for row in result:
-            json.append(row.cuisine_type)
-        return json
-    
-
-    
 
 class recipe_sort_options(str, Enum):
     recipe = "recipe"
