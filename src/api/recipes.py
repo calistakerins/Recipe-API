@@ -180,7 +180,7 @@ def list_recipe(recipe: str = "",
         json = {}
         json["recipes"] = []
         for row in result:
-            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": get_meal_type(row[0]), "meal_type": get_cuisine_type(row[0]), "time": str(row[2]) + " minutes"})
+            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": get_cuisine_type(row[0]), "meal_type": get_meal_type(row[0]), "time": str(row[2]) + " minutes"})
         return json
 
 
