@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.api import ingredients, recipes, pkg_util
+from src.api import ingredients, recipes, pkg_util, users
 
 description = """
 Recipes API returns important information related to different recipes.
@@ -30,6 +30,10 @@ tags_metadata = [
         "name": "ingredients",
         "description": "Access information on ingredients.",
     },
+    {
+        "name": "users",
+        "description": "Access information on users.",
+    },
 
 ]
 
@@ -46,6 +50,7 @@ app = FastAPI(
 app.include_router(ingredients.router)
 app.include_router(recipes.router)
 app.include_router(pkg_util.router)
+app.include_router(users.router)
 
 
 @app.get("/")
