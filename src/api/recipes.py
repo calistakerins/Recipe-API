@@ -5,6 +5,8 @@ from src import database as db
 from fastapi.params import Query
 import sqlalchemy
 from sqlalchemy import desc, func, select
+from sqlalchemy import*
+from fastapi import HTTPException, Body
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy.sql.sqltypes import Integer, String
@@ -207,14 +209,18 @@ def list_recipe(recipe: str = "",
 
 
 
+# all parameters are optional except the recipe name
+# all parameters are passed in from the request body now
+# complex transaction function since it uses commit(), rollback(), implements data validation, performs multiple database operations
 @router.post("/recipes/", tags=["recipes"])
-def add_recipe(recipe: str,
-    cuisine: str,
-    meal_type: str,
-    time: int, ingredJson: IngredientsJson):
+def add_recipe(recipe: str = Body(...),
+               cuisine: Optional[str] = Body(None),
+               meal_type: Optional[str] = Body(None),
+               time: Optional[int] = Body(None),
+               ingredJson: Optional[IngredientsJson] = Body(None)):
     """
-    This endpoint will allow users to add their own recipes to the API. To add a recipe, the
-    user must provide:
+    This endpoint will allow users to add their own recipes to the API.
+    To add a recipe, the user must provide:
     * `recipe`: The name of the recipe.
     * `cuisine`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
@@ -222,121 +228,156 @@ def add_recipe(recipe: str,
       that are needed to make the recipe.
     * `time`: The total time it takes to make the recipe.
     """
+    if not recipe:
+        raise HTTPException(400, "Recipe name is required.")
+
     with db.engine.connect() as conn:
-      recipe_id = conn.execute(sqlalchemy.select(db.recipes.c.recipe_id)
-                                  .where(db.recipes.c.recipe_name == recipe)).scalar()
-      max_recipe_id = conn.execute(sqlalchemy.select(sqlalchemy.func.max(db.recipes.c.recipe_id))).scalar()
-      if recipe_id:
-        raise HTTPException(404, "recipe already in database.")
-      if max_recipe_id is None:
-          recipe_id = 0
-      else:
-          recipe_id = max_recipe_id + 1
-      recipe_data = {"recipe_id": recipe_id, "recipe_name": recipe, "calories": 0, "prep_time_mins": time, "recipe_instructions": "", "recipe_url": ""}
-      conn.execute(db.recipes.insert().values(**recipe_data))
+        transaction = conn.begin()
 
-      cuisine_type_id = conn.execute(sqlalchemy.select(db.cuisine_type.c.cuisine_type_id)
-                                  .where(db.cuisine_type.c.cuisine_type == cuisine)).scalar()
-      max_cuisine_type_id = conn.execute(sqlalchemy.select(sqlalchemy.func.max(db.cuisine_type.c.cuisine_type_id))).scalar()
-      if cuisine_type_id is None and max_cuisine_type_id is None:
-          cuisine_type_id = 0
-      if cuisine_type_id is None and max_cuisine_type_id!= None:
-        cuisine_type_id = max_cuisine_type_id+1
-      cuisine_type_data = {"cuisine_type_id": cuisine_type_id, "recipe_id": recipe_id, "cuisine_type": cuisine}
-      conn.execute(db.cuisine_type.insert().values(**cuisine_type_data))
-
-      meal_type_id = conn.execute(sqlalchemy.select(db.meal_type.c.meal_type_id)
-                                .where(db.meal_type.c.meal_type == meal_type)).scalar()
-      max_meal_type_id = conn.execute(sqlalchemy.select(sqlalchemy.func.max(db.meal_type.c.meal_type_id))).scalar()
-
-      if meal_type_id is None and max_meal_type_id is None:
-          meal_type_id = 0
-      if meal_type_id is None and max_meal_type_id != None:
-          meal_type_id = max_meal_type_id+1
-      meal_type_data = {"meal_type_id": 0, "meal_type": meal_type, "recipe_id": recipe_id}
-      conn.execute(db.meal_type.insert().values(**meal_type_data))
-      for ingredient in ingredJson.ingredients:
-        ingredient_unit_type = ingredient.unit_type
-        ingredient_amount = ingredient.amount
-        ingredient_name = ingredient.ingrd
-        ingredient_id = conn.execute(
-            sqlalchemy.select(db.ingredients.c.ingredient_id)
-            .where(db.ingredients.c.ingredient_name == ingredient_name)
-        ).scalar()
-        if ingredient_id is None:
-            ingredient_id = conn.execute(
-                sqlalchemy.select(sqlalchemy.func.max(db.ingredients.c.ingredient_id))
+        try:
+            recipe_id = conn.execute(
+                sqlalchemy.select(db.recipes.c.recipe_id)
+                .where(db.recipes.c.recipe_name == recipe)
             ).scalar()
-            ingredient_id += 1
-            ingredient_cost_usd = ingredient.ingrd_cost
-            ingredient_data = {
-                "ingredient_id": ingredient_id,
-                "ingredient_name": ingredient_name,
-                "ingredient_cost_usd": ingredient_cost_usd,
+            max_recipe_id = conn.execute(
+                sqlalchemy.select(sqlalchemy.func.max(db.recipes.c.recipe_id))
+            ).scalar()
+            if recipe_id:
+                raise HTTPException(404, "Recipe already in database.")
+            if max_recipe_id is None:
+                recipe_id = 0
+            else:
+                recipe_id = max_recipe_id + 1
+
+            recipe_data = {
+                "recipe_id": recipe_id,
+                "recipe_name": recipe,
+                "calories": 0,
+                "prep_time_mins": time,
+                "recipe_instructions": "",
+                "recipe_url": "",
             }
-            conn.execute(db.ingredients.insert().values(**ingredient_data))
+            conn.execute(db.recipes.insert().values(**recipe_data))
 
-        quantity_data = {
-            "recipe_id": recipe_id,
-            "ingredient_id": ingredient_id,
-            "unit_type": ingredient_unit_type,
-            "amount": ingredient_amount,
-        }
-        conn.execute(db.ingredient_quantities.insert().values(**quantity_data))
-      return recipe_id
+            if cuisine:
+                cuisine_type_id = conn.execute(
+                    sqlalchemy.select(db.cuisine_type.c.cuisine_type_id)
+                    .where(db.cuisine_type.c.cuisine_type == cuisine)
+                ).scalar()
+                max_cuisine_type_id = conn.execute(
+                    sqlalchemy.select(sqlalchemy.func.max(db.cuisine_type.c.cuisine_type_id))
+                ).scalar()
+                if cuisine_type_id is None and max_cuisine_type_id is None:
+                    cuisine_type_id = 0
+                if cuisine_type_id is None and max_cuisine_type_id is not None:
+                    cuisine_type_id = max_cuisine_type_id + 1
+                cuisine_type_data = {
+                    "cuisine_type_id": cuisine_type_id,
+                    "recipe_id": recipe_id,
+                    "cuisine_type": cuisine,
+                }
+                conn.execute(db.cuisine_type.insert().values(**cuisine_type_data))
 
-@router.post("/recipes/{recipe_id}", tags=["recipes"])
-def modify_recipe(recipe_id: int,
-    old_ingredient: str,
-    new_ingredient: str,
-    new_amount: str, new_ingredient_cost: float,
-    ):
-    """
-    This endpoint will allow users to modify an ingredient in an existing recipe. 
-    The user will be able to change the name of an ingredient or the amount of an ingredient.
-    If the string of an old ingredient matches an ingredient in the recipe,
-    the ingredient will be changed to the new ingredient. The user can also change the
-    amount of an ingredient used in the recipe with the new_amount parameter. 
-    """
+            if meal_type:
+                meal_type_id = conn.execute(
+                    sqlalchemy.select(db.meal_type.c.meal_type_id)
+                    .where(db.meal_type.c.meal_type == meal_type)
+                ).scalar()
+                max_meal_type_id = conn.execute(
+                    sqlalchemy.select(sqlalchemy.func.max(db.meal_type.c.meal_type_id))
+                ).scalar()
+                if meal_type_id is None and max_meal_type_id is None:
+                    meal_type_id = 0
+                if meal_type_id is None and max_meal_type_id is not None:
+                    meal_type_id = max_meal_type_id + 1
+                meal_type_data = {
+                    "meal_type_id": meal_type_id,
+                    "meal_type": meal_type,
+                    "recipe_id": recipe_id,
+                }
+                conn.execute(db.meal_type.insert().values(**meal_type_data))
+
+            if ingredJson:
+                for ingredient in ingredJson.ingredients:
+                    ingredient_unit_type = ingredient.unit_type
+                    ingredient_amount = ingredient.amount
+                    ingredient_name = ingredient.ingrd
+                    ingredient_id = conn.execute(
+                        sqlalchemy.select(db.ingredients.c.ingredient_id)
+                        .where(db.ingredients.c.ingredient_name == ingredient_name)
+                    ).scalar()
+                    if ingredient_id is None:
+                        ingredient_id = conn.execute(
+                            sqlalchemy.select(sqlalchemy.func.max(db.ingredients.c.ingredient_id))
+                        ).scalar()
+                        ingredient_id += 1
+                        ingredient_cost_usd = ingredient.ingrd_cost
+                        ingredient_data = {
+                            "ingredient_id": ingredient_id,
+                            "ingredient_name": ingredient_name,
+                            "ingredient_price_usd": ingredient_cost_usd,
+                        }
+                        conn.execute(db.ingredients.insert().values(**ingredient_data))
+
+                    quantity_data = {
+                        "recipe_id": recipe_id,
+                        "ingredient_id": ingredient_id,
+                        "unit_type": ingredient_unit_type,
+                        "amount": ingredient_amount,
+                    }
+                    conn.execute(db.ingredient_quantities.insert().values(**quantity_data))
+
+            transaction.commit()
+        except:
+            transaction.rollback()
+            raise
+
+        return recipe_id
+
+# replaced post call with put call
+# parameters include ids instead of names so the function wouldn't have to look up the names and match them
+# made fields such as new_ingredient_cost, new_amount, and new_unit_type optional
+@router.put("/recipes/{recipe_id}/", tags=["recipes"])
+def modify_recipe(
+    recipe_id: int,
+    old_ingredient_id: int,
+    new_ingredient_name: str,
+    new_unit_type: Optional[str] = None,
+    new_amount: Optional[str] = None,
+    new_ingredient_cost: Optional[float] = None,
+):
     with db.engine.connect() as conn:
-      if old_ingredient:
-          recipe_query = select(db.ingredients.c.ingredient_name).\
-                    select_from(join(db.ingredient_quantities, db.ingredients,
-                                     db.ingredient_quantities.c.ingredient_id == db.ingredients.c.ingredient_id)).\
-                    where(and_(db.ingredient_quantities.c.recipe_id == recipe_id,
-                               db.ingredients.c.ingredient_name == old_ingredient))
-          recipe_result = conn.execute(recipe_query).fetchall()
-          if len(recipe_result) == 0:
-              return f"Ingredient '{old_ingredient}' not found in recipe with ID {recipe_id}"
-          old_ingredient_id = conn.execute(db.ingredients.select().where(db.ingredients.c.ingredient_name == old_ingredient)).fetchone()[0]
-          update_query = update(db.ingredient_quantities).where(
-              (db.ingredient_quantities.c.recipe_id == recipe_id) & 
-              (db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
-          )
-          if new_ingredient:
-              ingredient_id_query = select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == new_ingredient)
-              result = conn.execute(ingredient_id_query).fetchone()
-              if result is None:
-                  new_ingredient_id = conn.execute(
-                      sqlalchemy.select(sqlalchemy.func.max(db.ingredients.c.ingredient_id))
-                  ).scalar()
-                  new_ingredient_id += 1
-                  ingredient_cost_usd = new_ingredient_cost
-                  ingredient_data = {
-                      "ingredient_id": new_ingredient_id,
-                      "ingredient_name": new_ingredient,
-                      "ingredient_cost_usd": ingredient_cost_usd,
-                  }
-                  conn.execute(db.ingredients.insert().values(**ingredient_data))
-              else:
-                new_ingredient_id = result[0]
-              update_query = update_query.values(ingredient_id=new_ingredient_id)
-          if new_amount:
-              update_query = update_query.values(amount=new_amount)
-          conn.execute(update_query)
-          return f"Ingredient '{old_ingredient}' updated to '{new_ingredient}' and amount updated to '{new_amount}' in recipe with ID {recipe_id}"
-      else:
-          return "Please provide an old ingredient name to update"
+        if old_ingredient_id and new_ingredient_name:
+            ingredient_update_query = update(db.ingredients).where(
+                db.ingredients.c.ingredient_id == old_ingredient_id
+            ).values(
+                ingredient_name=new_ingredient_name
+            )
+            conn.execute(ingredient_update_query)
+            ingredient_quantity_update_query = update(db.ingredient_quantities).where(
+                (db.ingredient_quantities.c.recipe_id == recipe_id)
+                & (db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
+            )
+            if new_unit_type is not None:
+                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
+                    unit_type=new_unit_type
+                )
+            if new_amount is not None:
+                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
+                    amount=new_amount
+                )
+            if new_ingredient_cost is not None:
+                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
+                    ingredient_price_usd=new_ingredient_cost
+                )
+            
+            if new_unit_type is not None or new_amount is not None or new_ingredient_cost is not None:
+                conn.execute(ingredient_quantity_update_query)
+                conn.commit()
+            
+            return f"Ingredient with ID {old_ingredient_id} updated to '{new_ingredient_name}' and ingredient information updated in recipe with ID {recipe_id}"
+        else:
+            return "Please provide both old ingredient ID and new ingredient name"
 
 
 def get_user_id(username: str):
