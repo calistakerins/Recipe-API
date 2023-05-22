@@ -4,7 +4,7 @@ Developers: Anna Rosenberg (arosen12@calpoly.edu), Michelle Tan (mtan22@calpoly.
 This Recipe API returns statistics/data on common recipes. The endpoints for this API are documented in recipes.py and ingredients.py.
 
 
-#### Staging Deployment: https://recipe-api-staging-domain.vercel.app
+#### Staging Domain: https://recipe-api-staging-domain.vercel.app
 
 
 # User Stories / Functional Requirements
