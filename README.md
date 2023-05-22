@@ -3,6 +3,10 @@ Developers: Anna Rosenberg (arosen12@calpoly.edu), Michelle Tan (mtan22@calpoly.
 
 This Recipe API returns statistics/data on common recipes. The endpoints for this API are documented in recipes.py and ingredients.py.
 
+```
+Staging Deployment: https://recipe-api-staging-domain.vercel.app/
+```
+
 # User Stories / Functional Requirements
 
 - As a user, I want to be able to access recipes with a given list of ingredients, so that I can make a meal with food I already have.
