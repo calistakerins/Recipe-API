@@ -42,14 +42,12 @@ def get_ingredients(ingr_id: int):
     * `ingredient_id`: the internal id of the ingredient. Can be used to query the
       `/ingredients/{id}` endpoint.
     * `ingredient`: The name of the ingredient 
-    * `ingredient_cost`: The cost of the ingredient 
     * `recipes`: A list of the recipes that contain the ingredient.
 
     """
     stmt = sqlalchemy.select(
             db.ingredients.c.ingredient_id,
             db.ingredients.c.ingredient_name,
-            db.ingredients.c.ingredient_cost_usd,
         ).where(db.ingredients.c.ingredient_id == ingr_id)
     
 
@@ -61,16 +59,12 @@ def get_ingredients(ingr_id: int):
         for row in result:
           json["ingredient_id"] = row.ingredient_id
           json["ingredient_name"] = row.ingredient_name
-          json["ingredient_cost_usd"] = "$" + str(row.ingredient_cost_usd)
           json["recipes"] = list_recipes_with_ingredient(ingr_id)
-
-
     return json
 
 
 class IngredientJson(BaseModel):
     ingredient_name: str
-    ingredient_cost_usd: int
 
 
 @router.post("/ingredients/", tags=["ingredients"])
@@ -98,8 +92,7 @@ def add_ingredient(ingredient: IngredientJson):
               sqlalchemy.insert(db.ingredients),
               [
                   {"ingredient_id": ingredient_id,
-                  "ingredient_name": ingredient.ingredient_name,
-                  "ingredient_cost_usd": ingredient.ingredient_cost_usd},
+                  "ingredient_name": ingredient.ingredient_name}
               ],
           
       )
