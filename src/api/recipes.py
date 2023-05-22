@@ -61,6 +61,15 @@ def get_recipe(recipe_id: int):
 
     return json
 
+def get_number_of_favorites(recipe_id: int):
+    find_favorite_stmt = sqlalchemy.select(
+            db.favorited_recipes.c.user_id,
+        ).where(db.favorited_recipes.c.recipe_id == recipe_id)
+
+    with db.engine.connect() as conn:
+        favorite_result = conn.execute(find_favorite_stmt)
+        return favorite_result.rowcount
+
 def get_meal_type(recipe_id: int):
     find_meal_types = sqlalchemy.select(
             db.meal_type.c.meal_type,
