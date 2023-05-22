@@ -143,8 +143,10 @@ def list_recipe(recipe: str = "",
     * `recipe`: The name of the recipe.
     * `cuisine`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
-    * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
     * `time`: time needed to make the recipe.
+    * `instructions`: instrustion to make the recipe.
+    * `number_of_favorites`: number of users who have favorited recipe.
+
 
     You can filter for recipes whose name contains a string by using the
     `recipe` query parameter. You can filter for recipes by cuisine by using the
@@ -154,6 +156,8 @@ def list_recipe(recipe: str = "",
     You can also sort the results by using the `sort` query parameter:
     * `recipe` - Sort by recipe name alphabetically.
     * `time` - Sort by cooking time.
+    * `number_of_favorites` - Sort by number of users who have favorited recipe.
+
 
     The `limit` and `offset` query parameters are used for pagination.
     The `limit` query parameter specifies the maximum number of results to return.
@@ -164,12 +168,17 @@ def list_recipe(recipe: str = "",
         sort_by = db.recipes.c.recipe_name
     elif sort == recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
-    
+    elif sort == recipe_sort_options.number_of_favorites:
+        sort_by = sqlalchemy.func.count(db.favorited_recipes.c.recipe_id).desc()
+
     stmt = (
         sqlalchemy.select(db.recipes.c.recipe_id,
                           db.recipes.c.recipe_name,
-                          db.recipes.c.prep_time_mins).select_from(db.recipes.join(db.cuisine_type, db.recipes.c.recipe_id == db.cuisine_type.c.recipe_id).join(db.meal_type, db.recipes.c.recipe_id == db.meal_type.c.recipe_id))
-                          .order_by(sort_by).limit(limit).offset(offset).distinct()
+                          db.recipes.c.prep_time_mins,
+                          db.recipes.c.recipe_instructions,
+                          sqlalchemy.func.count(db.favorited_recipes.c.recipe_id).label("number_of_favorites")).select_from(db.recipes
+            .outerjoin(db.favorited_recipes, db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id)
+        ).group_by(db.recipes.c.recipe_id).order_by(sort_by).limit(limit).offset(offset).distinct()
 
      )
     
@@ -189,8 +198,12 @@ def list_recipe(recipe: str = "",
         json = {}
         json["recipes"] = []
         for row in result:
-            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": get_cuisine_type(row[0]), "meal_type": get_meal_type(row[0]), "time": str(row[2]) + " minutes"})
+            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": get_cuisine_type(row[0]),
+                                     "meal_type": get_meal_type(row[0]), "prep_time_mins": str(row[2]) + " minutes",
+                                       "instructions": row[3], "number_of_favorites": row[4]})
         return json
+    
+
 
 
 
