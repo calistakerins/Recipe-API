@@ -22,7 +22,7 @@ def add_user(username: str, password: str):
     """
 
     salt = os.urandom(32)
-    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-16'), salt, 100000)
     hashed_password = salt + key
 
     stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
@@ -30,12 +30,15 @@ def add_user(username: str, password: str):
       check_valid = conn.execute(stmt)
       if check_valid .rowcount > 0:
         raise HTTPException(status_code=404, detail="username already exists")
+      
+      # Encode hashed password using base64 
+      encoded_password = base64.b64encode(hashed_password).decode('utf-8')
 
       conn.execute(
               sqlalchemy.insert(db.users),
               [
                   {"user_name": username,
-                  "password": hashed_password.decode('latin-1')},
+                  "password": encoded_password },
               ],
             
       )
@@ -63,13 +66,17 @@ def validate_user_login(username: str, password: str):
         raise HTTPException(status_code=404, detail="user not found")
       for row in result:
          hashed_password = row.password
-   hashed_password = hashed_password.encode('latin-1')
+
+    # Decode hashed password from base64
+   hashed_password = base64.b64decode(hashed_password.encode('utf-8'))
+
    salt =hashed_password[:32]
    key = hashed_password[32:]
-   check_key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+   check_key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-16'), salt, 100000)
 
    if key == check_key:
         return {"message": "Password is correct"}
    else:
         return {"message": "Password is incorrect"}
       
+
