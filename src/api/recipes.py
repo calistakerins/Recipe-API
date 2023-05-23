@@ -432,7 +432,6 @@ def favorite_recipe(username: str, recipe_id: int
             transaction.rollback()
             update_favorite_stmt = sqlalchemy.update(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id).values(date_favorited = str(datetime.datetime.now()))
             conn.execute(update_favorite_stmt)
-            transaction.commit()
 
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
