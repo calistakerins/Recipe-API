@@ -167,7 +167,7 @@ def list_recipe(recipe: str = "",
     elif sort == recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
     elif sort == recipe_sort_options.number_of_favorites:
-        sort_by = db.recipes.c.number_of_favorites
+        sort_by = db.recipes.c.number_of_favorites.desc()
 
     stmt = (
         sqlalchemy.select(db.recipes.c.recipe_id,
