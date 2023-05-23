@@ -132,6 +132,7 @@ def get_ingredients(recipe_id: int):
 class recipe_sort_options(str, Enum):
     recipe = "recipe"
     time = "time"
+    number_of_favorites = "number_of_favorites"
 
 @router.get("/recipes/", tags=["recipes"])
 def list_recipe(recipe: str = "",
@@ -460,11 +461,18 @@ def list_favorite_recipes(username: str,
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
+    if sort == recipe_sort_options.recipe:
+        sort_by = db.recipes.c.recipe_name
+    elif sort == recipe_sort_options.time:
+        sort_by = db.recipes.c.prep_time_mins
+    elif sort == recipe_sort_options.number_of_favorites:
+        sort_by = db.recipes.c.number_of_favorites
+    
     user_id = get_user_id(username)
 
     stmt = sqlalchemy.select(db.recipes.c.recipe_id, db.recipes.c.recipe_name, db.recipes.c.prep_time_mins).\
             where(db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id and db.favorited_recipes.c.user_id == user_id).\
-            order_by(sort).\
+            order_by(sort_by).\
             limit(limit).\
             offset(offset)
 
