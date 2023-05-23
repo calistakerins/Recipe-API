@@ -461,12 +461,10 @@ def list_favorite_recipes(username: str,
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
-    if sort == recipe_sort_options.recipe:
-        sort_by = db.recipes.c.recipe_name
-    elif sort == recipe_sort_options.time:
+    if sort == recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
-    elif sort == recipe_sort_options.number_of_favorites:
-        sort_by = db.recipes.c.number_of_favorites
+    else:
+        sort_by = db.recipes.c.recipe_name
     
     user_id = get_user_id(username)
 
