@@ -442,6 +442,39 @@ def favorite_recipe(username: str, recipe_id: int
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
 
+@router.delete("/favorited_recipes/", tags=["favorited_recipes"])
+def unfavorite_recipe(username: str, recipe_id: int
+    ):
+    """
+    This endpoint will allow users to remove existing recipes from their favorites list. 
+    For testing purposes, use the username 'lpierce'.
+    """
+    user_id = get_user_id(username)
+
+    find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+
+    delete_favorite_stmt = sqlalchemy.delete(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
+
+    decrement_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites - 1)
+
+    with db.engine.connect() as conn:
+        transaction = conn.begin()
+        find_recipe_result = conn.execute(find_recipe_stmt)
+
+        if find_recipe_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Recipe does not exist.")
+        try:
+            conn.execute(delete_favorite_stmt)
+            transaction.commit()
+            conn.execute(decrement_num_favs_stmt)
+            conn.commit()
+        except sqlalchemy.exc.IntegrityError:
+            transaction.rollback()
+    
+    return {"recipe_id": recipe_id,
+            "user_id": user_id} 
+
+
 @router.get("/favorited_recipes/", tags=["favorited_recipes"])
 def list_favorite_recipes(username: str, 
     limit: int = Query(50, ge=1, le=250),
