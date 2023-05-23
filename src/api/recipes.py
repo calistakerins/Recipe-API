@@ -174,7 +174,7 @@ def list_recipe(recipe: str = "",
                           db.recipes.c.recipe_name,
                           db.recipes.c.prep_time_mins,
                           db.recipes.c.recipe_instructions,
-                          sqlalchemy.func.count(db.favorited_recipes.c.recipe_id).label("number_of_favorites")).select_from(db.recipes
+                          db.recipes.c.number_of_favorites).select_from(db.recipes
             .outerjoin(db.favorited_recipes, db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id)
         ).group_by(db.recipes.c.recipe_id).order_by(sort_by).limit(limit).offset(offset).distinct()
 
