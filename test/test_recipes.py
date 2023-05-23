@@ -18,7 +18,7 @@ def test_get_recipe2():
     assert response.status_code == 404
 
 def test_list_recipes():
-    response = client.get("/recipes/?recipe=Chorizo%20Street%20Tacos&limit=50&offset=0&sort=recipe")
+    response = client.get("/recipes/?limit=50&offset=0&sort=number_of_favorites")
     assert response.status_code == 200
 
     with open("test/recipes/list.json", encoding="utf-8") as f:

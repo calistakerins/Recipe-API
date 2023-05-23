@@ -397,7 +397,7 @@ def favorite_recipe(username: str, recipe_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
-    For testing purposes, use the username 'lpierce'.
+    The user must provide their username to favorite a recipe.
     """
     user_id = get_user_id(username)
 
@@ -438,7 +438,7 @@ def unfavorite_recipe(username: str, recipe_id: int
     ):
     """
     This endpoint will allow users to remove existing recipes from their favorites list. 
-    For testing purposes, use the username 'lpierce'.
+   
     """
     user_id = get_user_id(username)
 

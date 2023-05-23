@@ -19,16 +19,15 @@ def test_get_ingredient2():
 
 def test_add_ingredient():
     test = {
-        "ingredient_name": "butter",
-        "ingredient_cost_usd": 0,
+        "ingredient_name": "butter"
     }
     response = client.post("/ingredients/", json=test)
     assert response.status_code == 404
 
 def test_add_ingredient2():
     test = {
-        "ingredient_name": 5,
-        "ingredient_cost_usd": "string",
+        "ingredient_name": 5
+   
     }
     response = client.post("/ingredients/", json=test)
     assert response.status_code == 422
