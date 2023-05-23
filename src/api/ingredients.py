@@ -70,8 +70,7 @@ class IngredientJson(BaseModel):
 @router.post("/ingredients/", tags=["ingredients"])
 def add_ingredient(ingredient: IngredientJson):
     """
-    This endpoint adds a single ingredient. A new ingredient is represented by its name,
-    and its cost. 
+    This endpoint adds a single ingredient. A new ingredient is represented by its name.
     
     This endpoint will return the new id of the ingredient created. 
     """
