@@ -429,7 +429,12 @@ def favorite_recipe(username: str, recipe_id: int
                     ]
                 )
             transaction.commit()
-        except sqlalchemy.exc.IntegrityError:
+            #updates the number of favorites for the recipe if it is not already in the favorited by the user
+            update_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites + 1)
+            conn.execute(update_num_favs_stmt)
+            conn.commit()
+        #if the recipe is already in the favorites list, updates the date_favorited
+        except sqlalchemy.exc.IntegrityError: 
             transaction.rollback()
             update_favorite_stmt = sqlalchemy.update(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id).values(date_favorited = str(datetime.datetime.now()))
             conn.execute(update_favorite_stmt)
@@ -461,12 +466,10 @@ def list_favorite_recipes(username: str,
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
-    if sort == recipe_sort_options.recipe:
-        sort_by = db.recipes.c.recipe_name
-    elif sort == recipe_sort_options.time:
+    if sort == recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
-    elif sort == recipe_sort_options.number_of_favorites:
-        sort_by = db.recipes.c.number_of_favorites
+    else:
+        sort_by = db.recipes.c.recipe_name
     
     user_id = get_user_id(username)
 
