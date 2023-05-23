@@ -6,7 +6,6 @@ import hashlib
 import datetime
 
 from src import database as db
-from api import recipes
 
 from fastapi.params import Query
 
