@@ -429,7 +429,11 @@ def favorite_recipe(username: str, recipe_id: int
                     ]
                 )
             transaction.commit()
-        except sqlalchemy.exc.IntegrityError:
+            #updates the number of favorites for the recipe if it is not already in the favorited by the user
+            update_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites + 1)
+            conn.execute(update_num_favs_stmt)
+        #if the recipe is already in the favorites list, updates the date_favorited
+        except sqlalchemy.exc.IntegrityError: 
             transaction.rollback()
             update_favorite_stmt = sqlalchemy.update(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id).values(date_favorited = str(datetime.datetime.now()))
             conn.execute(update_favorite_stmt)
