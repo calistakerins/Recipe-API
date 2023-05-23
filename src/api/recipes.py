@@ -11,6 +11,7 @@ from typing import Optional
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy.sql.sqltypes import Integer, String
+from psycopg2.errors import UniqueViolation
 
 class Ingreds(BaseModel):
     ingrd: str
@@ -416,15 +417,18 @@ def favorite_recipe(username: str, recipe_id: int
 
         if find_recipe_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
-        
-        conn.execute(
-                  sqlalchemy.insert(db.favorited_recipes),
-                  [
-                    {"recipe_id": recipe_id,
-                    "user_id": user_id,
-                    "date_favorited": str(datetime.datetime.now())}
-                  ]
-            )
+        try:
+            conn.execute(
+                    sqlalchemy.insert(db.favorited_recipes),
+                    [
+                        {"recipe_id": recipe_id,
+                        "user_id": user_id,
+                        "date_favorited": str(datetime.datetime.now())}
+                    ]
+                )
+        except sqlalchemy.exc.IntegrityError:
+            update_favorite_stmt = sqlalchemy.update(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id).values(date_favorited = str(datetime.datetime.now()))
+            conn.execute(update_favorite_stmt)
 
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
