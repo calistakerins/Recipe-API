@@ -43,7 +43,7 @@ def get_recipe(recipe_id: int):
     json = None
 
     find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
-                db.recipes.c.recipe_name, db.recipes.c.prep_time_mins, db.recipes.c.recipe_instructions).\
+                db.recipes.c.recipe_name, db.recipes.c.prep_time_mins, db.recipes.c.recipe_instructions, db.recipes.c.number_of_favorites).\
                 where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
@@ -57,7 +57,7 @@ def get_recipe(recipe_id: int):
                 "ingredients": get_ingredients(row.recipe_id),
                 "prep_time_mins": row.prep_time_mins,
                 "instructions": row.recipe_instructions,
-                "number_of_favorites": get_number_of_favorites(row.recipe_id)
+                "number_of_favorites": row.number_of_favorites,
             }
 
     if json is None:
@@ -65,14 +65,6 @@ def get_recipe(recipe_id: int):
 
     return json
 
-def get_number_of_favorites(recipe_id: int):
-    find_favorite_stmt = sqlalchemy.select(
-            db.favorited_recipes.c.user_id,
-        ).where(db.favorited_recipes.c.recipe_id == recipe_id)
-
-    with db.engine.connect() as conn:
-        favorite_result = conn.execute(find_favorite_stmt)
-        return favorite_result.rowcount
 
 def get_meal_type(recipe_id: int):
     find_meal_types = sqlalchemy.select(
@@ -90,6 +82,7 @@ def get_meal_type(recipe_id: int):
             meal_types.append(row.meal_type)
     
     return meal_types
+
 
 def get_cuisine_type(recipe_id: int):
     find_cuisine_stmt = sqlalchemy.select(
@@ -174,14 +167,14 @@ def list_recipe(recipe: str = "",
     elif sort == recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
     elif sort == recipe_sort_options.number_of_favorites:
-        sort_by = sqlalchemy.func.count(db.favorited_recipes.c.recipe_id).desc()
+        sort_by = db.recipes.c.number_of_favorites.desc()
 
     stmt = (
         sqlalchemy.select(db.recipes.c.recipe_id,
                           db.recipes.c.recipe_name,
                           db.recipes.c.prep_time_mins,
                           db.recipes.c.recipe_instructions,
-                          sqlalchemy.func.count(db.favorited_recipes.c.recipe_id).label("number_of_favorites")).select_from(db.recipes
+                          db.recipes.c.number_of_favorites).select_from(db.recipes
             .outerjoin(db.favorited_recipes, db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id)
         ).group_by(db.recipes.c.recipe_id).order_by(sort_by).limit(limit).offset(offset).distinct()
 
@@ -398,9 +391,6 @@ def get_user_id(username: str):
     return user_id
 
 
-
-
-
 #add username to parameters
 @router.put("/favorited_recipes/", tags=["favorited_recipes"])
 def favorite_recipe(username: str, recipe_id: int
@@ -428,6 +418,7 @@ def favorite_recipe(username: str, recipe_id: int
                         "date_favorited": str(datetime.datetime.now())}
                     ]
                 )
+                #exception will occur here if the recipe is already in the favorites list
             transaction.commit()
             #updates the number of favorites for the recipe if it is not already in the favorited by the user
             update_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites + 1)
@@ -441,6 +432,39 @@ def favorite_recipe(username: str, recipe_id: int
 
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
+
+@router.delete("/favorited_recipes/", tags=["favorited_recipes"])
+def unfavorite_recipe(username: str, recipe_id: int
+    ):
+    """
+    This endpoint will allow users to remove existing recipes from their favorites list. 
+    For testing purposes, use the username 'lpierce'.
+    """
+    user_id = get_user_id(username)
+
+    find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+
+    delete_favorite_stmt = sqlalchemy.delete(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
+
+    decrement_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites - 1)
+
+    with db.engine.connect() as conn:
+        transaction = conn.begin()
+        find_recipe_result = conn.execute(find_recipe_stmt)
+
+        if find_recipe_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Recipe does not exist.")
+        try:
+            conn.execute(delete_favorite_stmt)
+            transaction.commit()
+            conn.execute(decrement_num_favs_stmt)
+            conn.commit()
+        except sqlalchemy.exc.IntegrityError:
+            transaction.rollback()
+    
+    return {"recipe_id": recipe_id,
+            "user_id": user_id} 
+
 
 @router.get("/favorited_recipes/", tags=["favorited_recipes"])
 def list_favorite_recipes(username: str, 
