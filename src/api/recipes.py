@@ -7,6 +7,7 @@ import sqlalchemy
 from sqlalchemy import desc, func, select
 from sqlalchemy import*
 from fastapi import HTTPException, Body
+from typing import Optional
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy.sql.sqltypes import Integer, String
