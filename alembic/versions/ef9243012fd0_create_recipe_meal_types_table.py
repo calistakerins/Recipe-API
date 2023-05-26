@@ -17,8 +17,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    pass
+    op.create_table(
+        'recipe_meal_types',
+        sa.Column('recipe_id', sa.Integer, primary_key=True),
+        sa.Column('meal_type_id', sa.Integer, primary_key=True),
+    )
 
 
 def downgrade() -> None:
-    pass
+    op.drop_table('recipe_meal_types')

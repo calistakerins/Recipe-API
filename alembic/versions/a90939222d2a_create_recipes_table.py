@@ -17,8 +17,16 @@ depends_on = None
 
 
 def upgrade() -> None:
-    pass
+    op.create_table(
+        'recipes',
+        sa.Column('recipe_id', sa.Integer, primary_key=True),
+        sa.Column('recipe_name', sa.String(50), nullable=False),
+        sa.Column('calories', sa.Integer(50), nullable=True),
+        sa.Column('prep_time_mins', sa.Integer(50), nullable=True),
+        sa.Column('recipe_instructions', sa.String(50), nullable=True),
+        sa.Column('recipe_url', sa.String(50), nullable=True),
+    )
 
 
 def downgrade() -> None:
-    pass
+    op.drop_table('recipes')
