@@ -15,7 +15,6 @@ down_revision = 'a90939222d2a'
 branch_labels = None
 depends_on = None
 
-
 def upgrade() -> None:
     op.create_table(
         'users',
