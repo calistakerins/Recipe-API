@@ -252,6 +252,7 @@ def add_recipe(recipe: str = Body(...),
                 "prep_time_mins": time,
                 "recipe_instructions": "",
                 "recipe_url": "",
+                "number_of_favorites": 0,
             }
             conn.execute(db.recipes.insert().values(**recipe_data))
 
