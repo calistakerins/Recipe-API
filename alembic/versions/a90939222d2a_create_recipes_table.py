@@ -25,6 +25,8 @@ def upgrade() -> None:
         sa.Column('prep_time_mins', sa.Integer, nullable=True),
         sa.Column('recipe_instructions', sa.String(50), nullable=True),
         sa.Column('recipe_url', sa.String(50), nullable=True),
+        sa.Column('number_of_favorites', sa.Integer, nullable=True),
+
     )
 
 
