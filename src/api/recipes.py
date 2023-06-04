@@ -32,13 +32,7 @@ def get_recipe(recipe_id: int):
     * `prep_time_mins`: The total time needed to prep the recipe in minutes.
     * `instructions`: The instructions needed to make the recipe.
     * `number_of_favorites`: The number of users that have favorited the recipe.
-    recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
-                db.recipes.c.recipe_name, db.recipes.c.prep_time_mins, db.recipes.c.recipe_instructions, db.recipes.c.number_of_favorites, 
-                db.meal_type.c.meal_type, db.cuisine_type.c.cuisine_type).select_from(db.recipes.outerjoin(db.recipe_meal_types,
-                db.recipe_meal_types.c.recipe_id == db.recipes.c.recipe_id).outerjoin(db.meal_type,
-                db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id)).outerjoin(db.recipe_cuisine_types,
-                db.recipe_cuisine_types.c.recipe_id == db.recipes.c.recipe_id).outerjoin(db.cuisine_type,                     
-                db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id).where(db.recipes.c.recipe_id == recipe_id)
+
     """
     json = None
 
