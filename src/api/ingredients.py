@@ -75,12 +75,15 @@ def add_ingredient(ingredient: IngredientJson):
     This endpoint will return the new id of the ingredient created. 
     """
     stmt = sqlalchemy.select(
-        db.ingredients.c.ingredient_name).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name)
+        db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name)
 
     with db.engine.begin() as conn:
       check_valid = conn.execute(stmt)
       if check_valid .rowcount > 0:
-        raise HTTPException(status_code=404, detail="ingredient already exists")
+        for row in check_valid:
+            ingredient_id = row.ingredient_id
+        return {"ingredient_id": ingredient_id} 
+
 
       conn.execute(
               sqlalchemy.insert(db.ingredients),
