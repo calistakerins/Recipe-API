@@ -4,6 +4,8 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 import sqlalchemy
 import hashlib
+from pydantic import BaseModel
+
 
 
 from src import database as db
@@ -13,14 +15,21 @@ from fastapi.params import Query
 
 router = APIRouter()
 
+class LoginJson(BaseModel):
+    username: str
+    password: str
 
-@router.post("/users/", tags=["add_user"])
-def add_user(username: str, password: str):
+
+@router.post("/register_user/", tags=["add_user"])
+def add_user(LoginJson: LoginJson):
     """
     This endpoint will allow users to create a new user. The user must provide a username
     and password. This endpoint check to make sure no duplicate usernames can be used.
-    All passwords will be stored as hashes to protect user privacy.
+    All passwords will be stored as hashes to protect user privacy. This endpoint will return
+    the user_id of the newly created user.
     """
+    username = LoginJson.username
+    password = LoginJson.password
 
     salt = os.urandom(32)
     key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-16'), salt, 100000)
@@ -50,15 +59,18 @@ def add_user(username: str, password: str):
          user_id = row.user_id
          hashed_password = row.password
 
-    return user_id, hashed_password
+    return user_id
 
 
-@router.get("/users/", tags=["validate_user"])
-def validate_user_login(username: str, password: str):
+@router.post("/login_user/", tags=["validate_user"])
+def validate_user_login(LoginJson: LoginJson):
    """
     This endpoint will allow users to check if their password is valid. This endpoint 
     will throw an error if the user does not exist, or if the passowrd is incorrect.
     """
+   
+   username = LoginJson.username
+   password = LoginJson.password
 
    stmt = sqlalchemy.select(db.users.c.password).where(db.users.c.user_name == username)
    with db.engine.begin() as conn:
