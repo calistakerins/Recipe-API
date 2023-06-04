@@ -82,18 +82,16 @@ def add_ingredient(ingredient: IngredientJson):
       if check_valid .rowcount > 0:
         raise HTTPException(status_code=404, detail="ingredient already exists")
 
-
-      ingredient_num_ids = conn.execute(sqlalchemy.select(func.max(db.ingredients.c.ingredient_id)))
-      for row in ingredient_num_ids:
-        ingredient_id = row[0] + 1
-
       conn.execute(
               sqlalchemy.insert(db.ingredients),
               [
-                  {"ingredient_id": ingredient_id,
-                  "ingredient_name": ingredient.ingredient_name}
+                  {"ingredient_name": ingredient.ingredient_name}
               ],
-          
       )
+
+      stmt = sqlalchemy.select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_name == ingredient.ingredient_name)
+      result = conn.execute(stmt)
+      for row in result:
+         ingredient_id = row.ingredient_id
 
     return {"ingredient_id": ingredient_id} 
