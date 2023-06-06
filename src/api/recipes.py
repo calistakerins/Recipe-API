@@ -210,6 +210,7 @@ def list_recipe(recipe: str = "",
 
 
 
+
 class IngredientsJson(BaseModel):
     ingredient_id: int
     unit_type: Optional[str]
@@ -219,7 +220,7 @@ class IngredientsJson(BaseModel):
 
 class recipeJson(BaseModel):
     recipe: str
-    cuisine_id: Optional[List[int]]
+    cuisine_type_id: Optional[List[int]]
     meal_type_id: Optional[List[int]]
     calories: Optional[int]
     time: Optional[int]
@@ -237,7 +238,7 @@ def add_recipe(recipe: recipeJson):
     This endpoint will allow users to add their own recipes to the API.
     To add a recipe, the user must provide:
     * `recipe`: The name of the recipe.
-    * `cuisine_id`: The cuisine id(s) for the recipe cuisine(s).
+    * `cuisine_type_id`: The cuisine id(s) for the recipe cuisine(s).
     * `meal_type_id`: The meal type id(s) for the recipe meal type(s).
     * `calories`: Total calories in one serving of the recipe.
     * `time`: The total time it takes to make the recipe.
@@ -256,14 +257,15 @@ def add_recipe(recipe: recipeJson):
                                                     recipe_url=recipe.url, number_of_favorites=0)
         result = conn.execute(stmt)
         recipe_id = result.inserted_primary_key[0]
-        if recipe.cuisine_id is not None:
-            for cuisine in recipe.cuisine_id:
-                check_valid_cuisine_stmt = sqlalchemy.select(db.cuisine_type.c.cuisine_type).where(db.cuisine_type.c.cuisine_type_id == cuisine)
+        print(recipe.cuisine_type_id, recipe.meal_type_id)
+        if recipe.cuisine_type_id is not None:
+            for cuisine_type in recipe.cuisine_type_id:
+                check_valid_cuisine_stmt = sqlalchemy.select(db.cuisine_type.c.cuisine_type).where(db.cuisine_type.c.cuisine_type_id == cuisine_type)
                 check_valid_result = conn.execute(check_valid_cuisine_stmt)
                 if check_valid_result.rowcount == 0:
                     conn.rollback()
                     raise HTTPException(status_code=400, detail="invalid cuisine id")
-                stmt = sqlalchemy.insert(db.recipe_cuisine_types).values(recipe_id=recipe_id, cuisine_id=cuisine)
+                stmt = sqlalchemy.insert(db.recipe_cuisine_types).values(recipe_id=recipe_id, cuisine_type_id=cuisine_type)
                 conn.execute(stmt)
         if recipe.meal_type_id is not None:
             for meal_type in recipe.meal_type_id:
@@ -282,7 +284,7 @@ def add_recipe(recipe: recipeJson):
                     conn.rollback()
                     raise HTTPException(status_code=400, detail="invalid ingredient id")
                 stmt = sqlalchemy.insert(db.ingredient_quantities).values(recipe_id=recipe_id, ingredient_id= ingredient.ingredient_id,
-                                                                            unit_type=ingredient.unit_type, amount=ingredient.amount, ingredient_cost=ingredient.ingredient_price_usd)
+                                                                            unit_type=ingredient.unit_type, amount=ingredient.amount, ingredient_price_usd=ingredient.ingredient_price_usd)
                 conn.execute(stmt)
             
         return {"recipe_id": recipe_id}
