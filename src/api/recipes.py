@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 
+
 @router.get("/recipes/{recipe_id}", tags=["recipes"])
 def get_recipe(recipe_id: int):
     """
@@ -43,8 +44,9 @@ def get_recipe(recipe_id: int):
             db.recipes.c.prep_time_mins,
             db.recipes.c.recipe_instructions,
             db.recipes.c.number_of_favorites,
-            sqlalchemy.func.ARRAY_AGG(db.meal_type.c.meal_type).label("meal_types"),
-            sqlalchemy.func.ARRAY_AGG(db.cuisine_type.c.cuisine_type).label("cuisine_types")
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.meal_type.c.meal_type)).label("meal_types"),
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.cuisine_type.c.cuisine_type)).label("cuisine_types"),
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.ingredients.c.ingredient_name)).label("ingredients"),
         )
         .select_from(
             db.recipes
@@ -63,6 +65,14 @@ def get_recipe(recipe_id: int):
             .outerjoin(
                 db.cuisine_type,
                 db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id
+            )
+            .outerjoin(
+                db.ingredient_quantities,
+                db.recipes.c.recipe_id == db.ingredient_quantities.c.recipe_id
+            )
+            .outerjoin(
+                db.ingredients,
+                db.ingredients.c.ingredient_id == db.ingredient_quantities.c.ingredient_id
             )
         )
         .where(db.recipes.c.recipe_id == recipe_id)
@@ -87,10 +97,12 @@ def get_recipe(recipe_id: int):
             "meal_type": row.meal_types,
             "prep_time_mins": row.prep_time_mins,
             "instructions": row.recipe_instructions,
+            "ingredients": row.ingredients,
             "number_of_favorites": row.number_of_favorites,
         }
 
     return json
+
 
 
 
@@ -206,8 +218,8 @@ def list_recipe(recipe: str = "",
             db.recipes.c.prep_time_mins,
             db.recipes.c.recipe_instructions,
             db.recipes.c.number_of_favorites,
-            sqlalchemy.func.ARRAY_AGG(db.meal_type.c.meal_type).label("meal_types"),
-            sqlalchemy.func.ARRAY_AGG(db.cuisine_type.c.cuisine_type).label("cuisine_types")
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.meal_type.c.meal_type)).label("meal_types"),
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.cuisine_type.c.cuisine_type)).label("cuisine_types")
         )
         .select_from(
             db.recipes
