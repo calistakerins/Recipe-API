@@ -18,6 +18,7 @@ router = APIRouter()
 
 
 
+
 @router.get("/recipes/{recipe_id}", tags=["recipes"])
 def get_recipe(recipe_id: int):
     """
@@ -34,38 +35,60 @@ def get_recipe(recipe_id: int):
     * `number_of_favorites`: The number of users that have favorited the recipe.
 
     """
-    json = None
-
-    recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id, 
-                db.recipes.c.recipe_name, db.recipes.c.prep_time_mins, db.recipes.c.recipe_instructions, db.recipes.c.number_of_favorites).where(db.recipes.c.recipe_id == recipe_id)
-
-    meal_type_stmt = sqlalchemy.select(db.meal_type.c.meal_type).select_from(db.meal_type.join(db.recipe_meal_types, db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id)).where(db.recipe_meal_types.c.recipe_id == recipe_id)
-    
-    cuisine_type_stmt = sqlalchemy.select(db.cuisine_type.c.cuisine_type).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id)).where(db.recipe_cuisine_types.c.recipe_id == recipe_id)
-
     with db.engine.connect() as conn:
-        recipe_result = conn.execute(recipe_stmt)
-        meal_type_result = conn.execute(meal_type_stmt)
-        cuisine_type_result = conn.execute(cuisine_type_stmt)
-        meal_type = []
-        cuisine_type = []
-        for row in meal_type_result:
-            meal_type.append(row.meal_type)
-        for row in cuisine_type_result:
-            cuisine_type.append(row.cuisine_type)
-        for row in recipe_result:
-            json = {
-                "recipe_id": row.recipe_id,
-                "recipe_name": row.recipe_name,
-                "cuisine_type": cuisine_type,
-                "meal_type": meal_type,
-                "prep_time_mins": row.prep_time_mins,
-                "instructions": row.recipe_instructions,
-                "number_of_favorites": row.number_of_favorites,
-            }
+        recipe_stmt = (
+        sqlalchemy.select(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions,
+            db.recipes.c.number_of_favorites,
+            sqlalchemy.func.ARRAY_AGG(db.meal_type.c.meal_type).label("meal_types"),
+            sqlalchemy.func.ARRAY_AGG(db.cuisine_type.c.cuisine_type).label("cuisine_types")
+        )
+        .select_from(
+            db.recipes
+            .outerjoin(
+                db.recipe_meal_types,
+                db.recipes.c.recipe_id == db.recipe_meal_types.c.recipe_id
+            )
+            .outerjoin(
+                db.recipe_cuisine_types,
+                db.recipes.c.recipe_id == db.recipe_cuisine_types.c.recipe_id
+            )
+            .outerjoin(
+                db.meal_type,
+                db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id
+            )
+            .outerjoin(
+                db.cuisine_type,
+                db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id
+            )
+        )
+        .where(db.recipes.c.recipe_id == recipe_id)
+        .group_by(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions,
+            db.recipes.c.number_of_favorites
+        )
+        )
+        result = conn.execute(recipe_stmt)
+        row = result.fetchone()
 
-    if json is None:
+        if row is None:
             raise HTTPException(status_code=404, detail="Recipe not found.")
+
+        json = {
+            "recipe_id": row.recipe_id,
+            "recipe_name": row.recipe_name,
+            "cuisine_type": row.cuisine_types,
+            "meal_type": row.meal_types,
+            "prep_time_mins": row.prep_time_mins,
+            "instructions": row.recipe_instructions,
+            "number_of_favorites": row.number_of_favorites,
+        }
 
     return json
 
