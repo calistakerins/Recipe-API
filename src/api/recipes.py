@@ -17,9 +17,6 @@ from psycopg2.errors import UniqueViolation
 router = APIRouter()
 
 
-
-
-
 @router.get("/recipes/{recipe_id}", tags=["recipes"])
 def get_recipe(recipe_id: int):
     """
@@ -104,62 +101,6 @@ def get_recipe(recipe_id: int):
     return json
 
 
-
-
-def get_meal_type(recipe_id: int):
-    find_meal_types = sqlalchemy.select(
-            db.meal_type.c.meal_type,
-        ).select_from(db.meal_type.join(db.recipe_meal_types, db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id)).\
-        where(db.recipe_meal_types.c.recipe_id == recipe_id)
-    
-    with db.engine.connect() as conn:
-        meal_type_result = conn.execute(find_meal_types)
-        if meal_type_result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="meal type not found")
-        
-        meal_types = []
-        for row in meal_type_result:
-            meal_types.append(row.meal_type)
-    
-    return meal_types
-
-
-def get_cuisine_type(recipe_id: int):
-    find_cuisine_stmt = sqlalchemy.select(
-            db.cuisine_type.c.cuisine_type,
-        ).select_from(db.cuisine_type.join(db.recipe_cuisine_types, db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id)).\
-        where(db.recipe_cuisine_types.c.recipe_id == recipe_id)
-    
-    with db.engine.connect() as conn:
-        cuisine_result = conn.execute(find_cuisine_stmt)
-        if cuisine_result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="cuisine type not found")
-        
-        cuisines = []
-        for row in cuisine_result:
-            cuisines.append(row.cuisine_type)
-    
-    return cuisines
-
-def get_ingredients(recipe_id: int):
-    find_ingriedients_stmt = sqlalchemy.select(
-            db.ingredient_quantities.c.ingredient_id,
-            db.ingredient_quantities.c.amount,
-            db.ingredient_quantities.c.unit_type,
-            db.ingredients.c.ingredient_name,
-    ).select_from(db.ingredient_quantities.join(db.ingredients, db.ingredients.c.ingredient_id == db.ingredient_quantities.c.ingredient_id)).\
-        where(db.ingredient_quantities.c.recipe_id == recipe_id)
-    
-    with db.engine.connect() as conn:
-        ingredients_result = conn.execute(find_ingriedients_stmt)
-        if ingredients_result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="no ingredients found matching recipe_id")
-        
-        ingriedients = []
-        for row in ingredients_result:
-            ingriedient_string = str(row.ingredient_name) + ": " + str(row.amount) + " " + str(row.unit_type)
-            ingriedients.append(ingriedient_string)
-        return ingriedients
 
 
 class recipe_sort_options(str, Enum):
@@ -400,39 +341,31 @@ def modify_recipe(
             return "Please provide both old ingredient ID and new ingredient name"
 
 
-def get_user_id(username: str):
-    stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_name == username)
-
-    user_id = -1
-
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        for row in result:
-            user_id = row.user_id
-
-    if user_id == -1:
-        raise HTTPException(status_code=404, detail="user not found")
-    return user_id
-
 
 #add username to parameters
 @router.put("/favorited_recipes/", tags=["favorited_recipes"])
-def favorite_recipe(username: str, recipe_id: int
+def favorite_recipe(user_id: int, recipe_id: int
     ):
     """
     This endpoint will allow users to add existing recipes to their favorites list. 
     The user must provide their username to favorite a recipe.
     """
-    user_id = get_user_id(username)
-
+    #check user exists
+    find_user_stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_id == user_id)
+    
+   
     find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
 
     with db.engine.connect() as conn:
         transaction = conn.begin()
-        find_recipe_result = conn.execute(find_recipe_stmt)
 
+        find_user_result = conn.execute(find_user_stmt)
+        if find_user_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found.")
+        find_recipe_result = conn.execute(find_recipe_stmt)
         if find_recipe_result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Recipe not found.")
+        
         try:
             conn.execute(
                     sqlalchemy.insert(db.favorited_recipes),
@@ -458,26 +391,35 @@ def favorite_recipe(username: str, recipe_id: int
             "user_id": user_id} 
 
 @router.delete("/favorited_recipes/", tags=["favorited_recipes"])
-def unfavorite_recipe(username: str, recipe_id: int
+def unfavorite_recipe(user_id: str, recipe_id: int
     ):
     """
     This endpoint will allow users to remove existing recipes from their favorites list. 
    
     """
-    user_id = get_user_id(username)
+    find_user_stmt = sqlalchemy.select(db.users.c.user_id).where(db.users.c.user_id == user_id)
 
     find_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
 
     delete_favorite_stmt = sqlalchemy.delete(db.favorited_recipes).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
 
+    check_if_favorited_stmt = sqlalchemy.select(db.favorited_recipes.c.recipe_id).where(db.favorited_recipes.c.recipe_id == recipe_id and db.favorited_recipes.c.user_id == user_id)
+
     decrement_num_favs_stmt = sqlalchemy.update(db.recipes).where(db.recipes.c.recipe_id == recipe_id).values(number_of_favorites = db.recipes.c.number_of_favorites - 1)
 
     with db.engine.connect() as conn:
         transaction = conn.begin()
+        find_user_result = conn.execute(find_user_stmt)
+        if find_user_result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found.")
         find_recipe_result = conn.execute(find_recipe_stmt)
-
         if find_recipe_result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Recipe does not exist.")
+            raise HTTPException(status_code=404, detail="Recipe not found.")
+        check_if_favorited_result = conn.execute(check_if_favorited_stmt)
+        if check_if_favorited_result.rowcount == 0:
+            return {"recipe_id": recipe_id,
+                    "user_id": user_id} 
+        
         try:
             conn.execute(delete_favorite_stmt)
             transaction.commit()
