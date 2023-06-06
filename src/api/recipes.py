@@ -489,12 +489,10 @@ def unfavorite_recipe(username: str, recipe_id: int
     return {"recipe_id": recipe_id,
             "user_id": user_id} 
 
-
 @router.get("/favorited_recipes/", tags=["favorited_recipes"])
-def list_favorite_recipes(username: str, 
+def list_favorite_recipes(user_id: int, 
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
-    sort: recipe_sort_options = recipe_sort_options.recipe
     ):
     """
     This endpoint will list all recipes in the users favorites list. For each recipe it returns:
@@ -503,41 +501,76 @@ def list_favorite_recipes(username: str,
     * `recipe`: The name of the recipe.
     * `cuisine`: The cuisine that the recipe is from.
     * `meal_type`: The meal type that the recipe is from.
+    * `prep_time_mins`: The time needed to make the recipe.
+    * `instructions`: The instructions for making the recipe.
     * `ingredients`: The listed ingredients and amounts that are needed to make the recipe.
     * `prep_time_mins`: time needed to make the recipe.
-
-    You can also sort the results by using the `sort` query parameter:
-    * `recipe` - Sort by recipe name alphabetically.
-    * `time` - Sort by cooking time.
 
     The `limit` and `offset` query parameters are used for pagination.
     The `limit` query parameter specifies the maximum number of results to return.
     The `offset` query parameter specifies the number of results to skip before
     """
-    if sort == recipe_sort_options.time:
-        sort_by = db.recipes.c.prep_time_mins
-    else:
-        sort_by = db.recipes.c.recipe_name
     
-    user_id = get_user_id(username)
 
-    stmt = sqlalchemy.select(db.recipes.c.recipe_id, db.recipes.c.recipe_name, db.recipes.c.prep_time_mins).\
-            where(db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id and db.favorited_recipes.c.user_id == user_id).\
-            order_by(sort_by).\
-            limit(limit).\
-            offset(offset)
+    recipe_stmt = (
+        sqlalchemy.select(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions,
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.meal_type.c.meal_type)).label("meal_types"),
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.cuisine_type.c.cuisine_type)).label("cuisine_types"),
+            sqlalchemy.func.ARRAY_AGG(sqlalchemy.distinct(db.ingredients.c.ingredient_name)).label("ingredients"),
+        )
+        .select_from(
+            db.recipes
+            .outerjoin(
+                db.recipe_meal_types,
+                db.recipes.c.recipe_id == db.recipe_meal_types.c.recipe_id
+            )
+            .outerjoin(
+                db.recipe_cuisine_types,
+                db.recipes.c.recipe_id == db.recipe_cuisine_types.c.recipe_id
+            )
+            .outerjoin(
+                db.meal_type,
+                db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id
+            )
+            .outerjoin(
+                db.cuisine_type,
+                db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id
+            )
+            .outerjoin(
+                db.ingredient_quantities,
+                db.recipes.c.recipe_id == db.ingredient_quantities.c.recipe_id
+            )
+            .outerjoin(
+                db.ingredients,
+                db.ingredients.c.ingredient_id == db.ingredient_quantities.c.ingredient_id
+            )
+            .join(
+                db.favorited_recipes,
+                db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id
+            )
+        )
+        .where(db.favorited_recipes.c.user_id == user_id)
+        .group_by(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions        ).order_by(db.recipes.c.recipe_name).limit(limit).offset(offset).distinct()
+        )
 
-    favorited_recipes = []
     with db.engine.connect() as conn:
-        favorited_results = conn.execute(stmt)
+        favorited_results = conn.execute(recipe_stmt)
+        if favorited_results.rowcount == 0:
+            raise HTTPException(status_code=404, detail="no recipes favorited")
+        json = {}
+        json["recipes"] = []
         for row in favorited_results:
-            favorited_recipes.append({
-                "recipe_id": row.recipe_id,
-                "recipe": row.recipe_name,
-                "cuisine": get_cuisine_type(row.recipe_id),
-                "meal_type": get_meal_type(row.recipe_id),
-                "ingredients": get_ingredients(row.recipe_id),
-                "prep_time_mins": row.prep_time_mins
-            })
+            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": row[6],
+                                     "meal_type": row[5], "prep_time_mins": str(row[2]) + " minutes",
+                                       "instructions": row[3], "number_of_favorites": row[4]})
+        return json
 
-    return favorited_recipes
+
