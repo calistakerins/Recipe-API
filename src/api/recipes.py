@@ -190,22 +190,51 @@ def list_recipe(recipe: str = "",
     The `offset` query parameter specifies the number of results to skip before
     returning results.
     """
-    if sort == recipe_sort_options.recipe:
+    if sort is recipe_sort_options.recipe:
         sort_by = db.recipes.c.recipe_name
-    elif sort == recipe_sort_options.time:
+    elif sort is recipe_sort_options.time:
         sort_by = db.recipes.c.prep_time_mins
-    elif sort == recipe_sort_options.number_of_favorites:
+    elif sort is recipe_sort_options.number_of_favorites:
         sort_by = db.recipes.c.number_of_favorites.desc()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid sort option")
 
     stmt = (
-        sqlalchemy.select(db.recipes.c.recipe_id,
-                          db.recipes.c.recipe_name,
-                          db.recipes.c.prep_time_mins,
-                          db.recipes.c.recipe_instructions,
-                          db.recipes.c.number_of_favorites).select_from(db.recipes
-            .outerjoin(db.favorited_recipes, db.recipes.c.recipe_id == db.favorited_recipes.c.recipe_id)
-        ).group_by(db.recipes.c.recipe_id).order_by(sort_by).limit(limit).offset(offset).distinct()
-
+        sqlalchemy.select(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions,
+            db.recipes.c.number_of_favorites,
+            sqlalchemy.func.ARRAY_AGG(db.meal_type.c.meal_type).label("meal_types"),
+            sqlalchemy.func.ARRAY_AGG(db.cuisine_type.c.cuisine_type).label("cuisine_types")
+        )
+        .select_from(
+            db.recipes
+            .outerjoin(
+                db.recipe_meal_types,
+                db.recipes.c.recipe_id == db.recipe_meal_types.c.recipe_id
+            )
+            .outerjoin(
+                db.recipe_cuisine_types,
+                db.recipes.c.recipe_id == db.recipe_cuisine_types.c.recipe_id
+            )
+            .outerjoin(
+                db.meal_type,
+                db.meal_type.c.meal_type_id == db.recipe_meal_types.c.meal_type_id
+            )
+            .outerjoin(
+                db.cuisine_type,
+                db.cuisine_type.c.cuisine_type_id == db.recipe_cuisine_types.c.cuisine_type_id
+            )
+        )
+        .group_by(
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name,
+            db.recipes.c.prep_time_mins,
+            db.recipes.c.recipe_instructions,
+            db.recipes.c.number_of_favorites
+        ).order_by(sort_by).limit(limit).offset(offset).distinct()
      )
     
     if recipe != "":
@@ -217,6 +246,8 @@ def list_recipe(recipe: str = "",
     if meal_type != "":
         stmt = stmt.where(db.meal_type.c.meal_type.ilike(f"%{meal_type}%"))
 
+    
+
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
         if result.rowcount == 0:
@@ -224,11 +255,10 @@ def list_recipe(recipe: str = "",
         json = {}
         json["recipes"] = []
         for row in result:
-            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": get_cuisine_type(row[0]),
-                                     "meal_type": get_meal_type(row[0]), "prep_time_mins": str(row[2]) + " minutes",
+            json["recipes"].append({"recipe_id": row[0], "recipe_name": row[1], "cuisine": row[6],
+                                     "meal_type": row[5], "prep_time_mins": str(row[2]) + " minutes",
                                        "instructions": row[3], "number_of_favorites": row[4]})
         return json
-    
 
 
 
