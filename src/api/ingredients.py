@@ -45,22 +45,44 @@ def get_ingredients(ingr_id: int):
     * `recipes`: A list of the recipes that contain the ingredient.
 
     """
-    stmt = sqlalchemy.select(
+    stmt = (
+        sqlalchemy.select(
             db.ingredients.c.ingredient_id,
             db.ingredients.c.ingredient_name,
-        ).where(db.ingredients.c.ingredient_id == ingr_id)
-    
+            db.recipes.c.recipe_id,
+            db.recipes.c.recipe_name
+        )
+        .select_from(
+            db.ingredients
+            .outerjoin(
+                db.ingredient_quantities,
+                db.ingredients.c.ingredient_id == db.ingredient_quantities.c.ingredient_id
+            )
+            .outerjoin(
+                db.recipes,
+                db.recipes.c.recipe_id == db.ingredient_quantities.c.recipe_id
+            )
+        )
+        .where(db.ingredients.c.ingredient_id == ingr_id)
+    )
 
     with db.engine.connect() as conn:
         result = conn.execute(stmt)
         if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="ingredient not found")
-        json ={}
+            raise HTTPException(status_code=404, detail="Ingredient not found")
+        
+        ingredient_data = {}
+        recipe_list = []
         for row in result:
-          json["ingredient_id"] = row.ingredient_id
-          json["ingredient_name"] = row.ingredient_name
-          json["recipes"] = list_recipes_with_ingredient(ingr_id)
-    return json
+            if "ingredient_id" not in ingredient_data:
+                ingredient_data["ingredient_id"] = row.ingredient_id
+                ingredient_data["ingredient_name"] = row.ingredient_name
+            
+            recipe_list.append({"recipe_id": row.recipe_id, "recipe_name": row.recipe_name})
+        
+        ingredient_data["recipes"] = recipe_list
+
+    return ingredient_data
 
 
 class IngredientJson(BaseModel):
