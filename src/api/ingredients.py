@@ -9,30 +9,6 @@ from fastapi.params import Query
 
 router = APIRouter()
 
-def list_recipes_with_ingredient(ingr_id: int):
-    """
-    This endpoint returns a list of the recipes that contain a certain ingredient. For each recipe it returns:
-    * `recipe_name`: the name of the recipe. Can be used to query the
-    """
-    stmt = sqlalchemy.select(
-            db.recipes.c.recipe_name,
-        ).select_from(
-            db.recipes.join(
-                db.ingredient_quantities,
-                db.ingredient_quantities.c.recipe_id == db.recipes.c.recipe_id and
-                db.ingredient_quantities.c.ingredient_id == ingr_id
- 
-            )
-        ).where(db.ingredient_quantities.c.ingredient_id == ingr_id).distinct()
-    
-    with db.engine.connect() as conn:
-        result = conn.execute(stmt)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="ingredient not found")
-        json = []
-        for row in result:
-          json.append(row.recipe_name)
-        return json
 
 @router.get("/ingredients/{ingr_id}", tags=["ingredients"])
 def get_ingredients(ingr_id: int):
