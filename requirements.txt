@@ -6,3 +6,5 @@ psycopg2-binary~=2.9.3
 python-dotenv
 pre-commit
 supabase
+faker
+numpy
