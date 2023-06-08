@@ -18,8 +18,8 @@
 <summary>Table of Contents</summary>
 
 - [About](#About)
-  - [Usage](#usage)
-  - [Built With](#built-with)
+- [Usage](#usage)
+- [Built With](#built-with)
 - [Prerequisites](#prerequisites)
 - [Technical Specification and Documentation](#Technical-Specification-and-Documentation)
 - [Roadmap](#roadmap) 
