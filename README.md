@@ -65,7 +65,6 @@ Our API is currently running on Vercel. Below you can find a link to our product
 
 ### Technical Specification and Documentation
 
-> Describe how to install and get started with the project.
 - Endpoint Documentation: https://github.com/calistakerins/Recipe-API/blob/main/Endpoint_Documentation%20(1).pdf
 - ER Diagram: https://github.com/calistakerins/Recipe-API/blob/main/Recipe%20API%20ER%20Diagram%20(3).pdf
 - Documentation of Complex Transactions with Concurrency: https://github.com/calistakerins/Recipe-API/blob/main/Complex_Transactions_Write_Up.pdf
