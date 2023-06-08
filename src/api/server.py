@@ -14,11 +14,17 @@ You can:
 * **favorite a recipe**
 * **view your favorited recipes**
 
-## Ingriedients
+## Ingredients
 
 You can:
 * **list ingredients with sorting and filtering options.**
 * **retrieve a specific ingredient by id**
+
+## Users
+
+You can:
+* **Register as a new user**
+* **Validate your login as an existing user**
 
 """
 tags_metadata = [
