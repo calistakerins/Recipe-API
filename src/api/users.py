@@ -59,7 +59,7 @@ def add_user(LoginJson: LoginJson):
          user_id = row.user_id
          hashed_password = row.password
 
-    return user_id
+    return {"user_id": user_id}
 
 
 @router.post("/login_user/", tags=["validate_user"])
