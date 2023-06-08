@@ -5,7 +5,6 @@ from src import database as db
 from fastapi.params import Query
 import sqlalchemy
 from sqlalchemy import desc, func, select
-from sqlalchemy import*
 from fastapi import HTTPException, Body
 from typing import Optional
 from typing import List
