@@ -33,7 +33,7 @@
 
 ## About
 
-This API simulates a recipe database. Users can access information about recipes, costs of ingredients, ingredient amounts, meal types, and more. This database serves to help people find the right recipes for their lifestyles. If the user wants to make something of a certain cuisine or have something with a certain number of calories, these parameters can be referenced. They can also favorite a recipe to access a certain recipe easily. Recipes can be added and ingredients of recipes can be modified if a user wants to change a certain ingredient. 
+This API simulates a recipe database. Users can access information about recipes, costs of ingredients, ingredient amounts, meal types, and more. This database serves to help people find the right recipes for their lifestyles. If the user wants to make something of a certain cuisine or meal type, these parameters can be referenced. They can also favorite a recipe to access a certain recipe easily. Recipes can be added and ingredients of recipes can be modified if a user wants to change a certain ingredient. 
 
 
 </details>
