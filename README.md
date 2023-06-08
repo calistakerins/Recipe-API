@@ -1,7 +1,7 @@
 <h1 align="center">
   <a href="https://github.com/calistakerins/Recipe-API">
     <!-- Please provide path to your logo here -->
-    <img src=./remy.jpg?raw=true alt="Logo" width="100" height="100">
+    <img src=./remy.jpg?raw=true alt="Logo" width="600" height="280">
   </a>
 </h1>
 
