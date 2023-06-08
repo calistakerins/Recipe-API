@@ -295,51 +295,51 @@ def add_recipe(recipe: recipeJson):
             
         return {"recipe_id": recipe_id}
 
-# replaced post call with put call
-# parameters include ids instead of names so the function wouldn't have to look up the names and match them
-# made fields such as new_ingredient_cost, new_amount, and new_unit_type optional
 @router.put("/recipes/{recipe_id}/", tags=["recipes"])
 def modify_recipe(
     recipe_id: int,
     old_ingredient_id: int,
-    new_ingredient_name: str,
+    new_ingredient_id: int,
     new_unit_type: Optional[str] = None,
     new_amount: Optional[str] = None,
     new_ingredient_cost: Optional[float] = None,
 ):
-    with db.engine.connect() as conn:
-        if old_ingredient_id and new_ingredient_name:
-            ingredient_update_query = update(db.ingredients).where(
-                db.ingredients.c.ingredient_id == old_ingredient_id
-            ).values(
-                ingredient_name=new_ingredient_name
-            )
-            conn.execute(ingredient_update_query)
-            ingredient_quantity_update_query = update(db.ingredient_quantities).where(
-                (db.ingredient_quantities.c.recipe_id == recipe_id)
-                & (db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
-            )
-            if new_unit_type is not None:
-                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
-                    unit_type=new_unit_type
-                )
-            if new_amount is not None:
-                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
-                    amount=new_amount
-                )
-            if new_ingredient_cost is not None:
-                ingredient_quantity_update_query = ingredient_quantity_update_query.values(
-                    ingredient_price_usd=new_ingredient_cost
-                )
-            
-            if new_unit_type is not None or new_amount is not None or new_ingredient_cost is not None:
-                conn.execute(ingredient_quantity_update_query)
-                conn.commit()
-            
-            return f"Ingredient with ID {old_ingredient_id} updated to '{new_ingredient_name}' and ingredient information updated in recipe with ID {recipe_id}"
-        else:
-            return "Please provide both old ingredient ID and new ingredient name"
-
+    """
+    This endpoint will allow users to modify or change an ingredient
+    within existing recipes.
+    To moify a recipe, the user must provide:
+    * `recipe_id`: The id of the recipe.
+    * `old_ingredient_id`: The id of the old ingredient.
+    * `new_ingredient_id`: The id of the new ingredient.
+    * `new_unit_type`: The new unit type the ingredient is measured in.
+    * `new_amount`: The new amount of ingredient needed.
+    * `new_ingredient_cost`: The new ingredient cost.
+    """
+    check_valid_recipe_stmt = sqlalchemy.select(db.recipes.c.recipe_id).where(db.recipes.c.recipe_id == recipe_id)
+    check_valid_ingredient_stmt = sqlalchemy.select(db.ingredients.c.ingredient_id).where(db.ingredients.c.ingredient_id == new_ingredient_id)
+    check_ingredient_in_recipe_stmt = sqlalchemy.select(db.ingredient_quantities.c.ingredient_id).where(db.ingredient_quantities.c.recipe_id == recipe_id).where(db.ingredient_quantities.c.ingredient_id == old_ingredient_id)
+    with db.engine.begin() as conn:
+        result = conn.execute(check_valid_recipe_stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="recipe does not exist")
+        result = conn.execute(check_valid_ingredient_stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="new ingredient does not exist, you can add it using the POST /ingredients/ endpoint")
+        result = conn.execute(check_ingredient_in_recipe_stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="ingredient does not exist in recipe")
+        stmt = sqlalchemy.update(db.ingredient_quantities).where(db.ingredient_quantities.c.recipe_id == recipe_id).where(db.ingredient_quantities.c.ingredient_id == old_ingredient_id).values(ingredient_id=new_ingredient_id)
+        conn.execute(stmt)
+        if new_unit_type is not None:
+            stmt = sqlalchemy.update(db.ingredient_quantities).where(db.ingredient_quantities.c.recipe_id == recipe_id).where(db.ingredient_quantities.c.ingredient_id == new_ingredient_id).values(unit_type=new_unit_type)
+            conn.execute(stmt)
+        if new_amount is not None:
+            stmt = sqlalchemy.update(db.ingredient_quantities).where(db.ingredient_quantities.c.recipe_id == recipe_id).where(db.ingredient_quantities.c.ingredient_id == new_ingredient_id).values(amount=new_amount)
+            conn.execute(stmt)
+        if new_ingredient_cost is not None:
+            stmt = sqlalchemy.update(db.ingredient_quantities).where(db.ingredient_quantities.c.recipe_id == recipe_id).where(db.ingredient_quantities.c.ingredient_id == new_ingredient_id).values(ingredient_price_usd=new_ingredient_cost)
+            conn.execute(stmt)
+        return {"recipe_id": recipe_id}
 
 
 #add username to parameters
